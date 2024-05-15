@@ -38,10 +38,12 @@ func parse(c *Clic, args []string, cmd string) error {
 	fs := c.h.FlagSet()
 
 	c.isSet = cmd == "" || cmd == fs.Name()
-	if c.isSet {
-		if err := fs.Parse(args); err != nil {
-			return NewParseError(err, fs)
-		}
+	if !c.isSet {
+		return nil
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return NewParseError(err, fs)
 	}
 
 	nArg := fs.NArg()
@@ -49,8 +51,8 @@ func parse(c *Clic, args []string, cmd string) error {
 		return nil
 	}
 
-	cmd = args[nArg-1]
-	args = args[nArg:]
+	cmd = args[len(args)-nArg]
+	args = args[len(args)-nArg+1:]
 
 	for _, sub := range c.subs {
 		if err := parse(sub, args, cmd); err != nil {
