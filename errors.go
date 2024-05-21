@@ -2,17 +2,15 @@ package clic
 
 import (
 	"fmt"
-
-	"github.com/daved/flagset"
 )
 
 type ParseError struct {
 	cause error
-	fs    *flagset.FlagSet
+	h     Handler
 }
 
-func NewParseError(err error, fs *flagset.FlagSet) *ParseError {
-	return &ParseError{err, fs}
+func NewParseError(err error, h Handler) *ParseError {
+	return &ParseError{err, h}
 }
 
 func (e *ParseError) Error() string {
@@ -23,6 +21,6 @@ func (e *ParseError) Unwrap() error {
 	return e.cause
 }
 
-func (e *ParseError) FlagSet() *flagset.FlagSet {
-	return e.fs
+func (e *ParseError) Handler() Handler {
+	return e.h
 }

@@ -4,7 +4,7 @@ import (
 	"github.com/daved/flagset"
 )
 
-type HandleFunc func() error
+type handleFunc func() error
 
 type Handler interface {
 	FlagSet() *flagset.FlagSet
@@ -43,7 +43,7 @@ func parse(c *Clic, args []string, cmd string) error {
 	}
 
 	if err := fs.Parse(args); err != nil {
-		return NewParseError(err, fs)
+		return NewParseError(err, c.h)
 	}
 
 	nArg := fs.NArg()
@@ -63,7 +63,7 @@ func parse(c *Clic, args []string, cmd string) error {
 	return nil
 }
 
-func getFn(c *Clic) HandleFunc {
+func getFn(c *Clic) handleFunc {
 	for _, sub := range c.subs {
 		if !sub.isSet {
 			continue
