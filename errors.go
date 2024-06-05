@@ -6,21 +6,21 @@ import (
 
 type ParseError struct {
 	cause error
-	h     Handler
+	c     *Clic
 }
 
-func NewParseError(err error, h Handler) *ParseError {
-	return &ParseError{err, h}
+func NewParseError(err error, c *Clic) *ParseError {
+	return &ParseError{err, c}
 }
 
 func (e *ParseError) Error() string {
-	return fmt.Sprintf("command parse: %v", e.cause)
+	return fmt.Sprintf("cli command: parse: %v", e.cause)
 }
 
 func (e *ParseError) Unwrap() error {
 	return e.cause
 }
 
-func (e *ParseError) Handler() Handler {
-	return e.h
+func (e *ParseError) Clic() *Clic {
+	return e.c
 }

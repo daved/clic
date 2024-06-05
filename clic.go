@@ -4,46 +4,80 @@ import (
 	"github.com/daved/flagset"
 )
 
-type handleFunc func() error
-
 type Handler interface {
 	FlagSet() *flagset.FlagSet
-	HandleCommand() error
+	HandleCommand(*Clic) error
 }
 
 type Clic struct {
-	h     Handler
-	subs  []*Clic
-	isSet bool
+	h        Handler
+	subs     []*Clic
+	isCalled bool
+	parent   *Clic
+	meta     map[string]any
 }
 
 func New(h Handler, subs ...*Clic) *Clic {
-	return &Clic{
+	c := &Clic{
 		h:    h,
 		subs: subs,
+		meta: map[string]any{
+			"SkipUsage":   false,
+			"SubRequired": false,
+		},
 	}
+
+	for _, sub := range c.subs {
+		sub.parent = c
+	}
+
+	return c
 }
 
 func (c *Clic) Parse(args []string) error {
 	return parse(c, args, "")
 }
 
-func (c *Clic) HandleCommand() error {
-	fn := getFn(c)
-	return fn()
+func (c *Clic) HandleCalled() error {
+	called := lastCalled(c)
+	return called.h.HandleCommand(called)
+}
+
+func (c *Clic) Parent() *Clic {
+	return c.parent
+}
+
+func (c *Clic) FlagSet() *flagset.FlagSet {
+	return c.h.FlagSet()
+}
+
+func (c *Clic) Name() string {
+	return c.h.FlagSet().Name()
+}
+
+func (c *Clic) Subs() []*Clic {
+	return c.subs
+}
+
+func (c *Clic) IsCalled() bool {
+	return c.isCalled
+}
+
+func (c *Clic) Meta() map[string]any {
+	return c.meta
 }
 
 func parse(c *Clic, args []string, cmd string) error {
 	// TODO: validate sub commands, if any
 	fs := c.h.FlagSet()
 
-	c.isSet = cmd == "" || cmd == fs.Name()
-	if !c.isSet {
+	c.isCalled = cmd == "" || cmd == fs.Name()
+	if !c.isCalled {
 		return nil
 	}
 
 	if err := fs.Parse(args); err != nil {
-		return NewParseError(err, c.h)
+		return NewParseError(err, c)
 	}
 
 	nArg := fs.NArg()
@@ -63,14 +97,14 @@ func parse(c *Clic, args []string, cmd string) error {
 	return nil
 }
 
-func getFn(c *Clic) handleFunc {
+func lastCalled(c *Clic) *Clic {
 	for _, sub := range c.subs {
-		if !sub.isSet {
+		if !sub.isCalled {
 			continue
 		}
 
-		return getFn(sub)
+		return lastCalled(sub)
 	}
 
-	return c.h.HandleCommand
+	return c
 }
