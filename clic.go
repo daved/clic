@@ -79,6 +79,7 @@ func parse(c *Clic, args []string, cmd string) error {
 	if err := fs.Parse(args); err != nil {
 		return NewParseError(err, c)
 	}
+	args = fs.Args()
 
 	nArg := fs.NArg()
 	if nArg == 0 {
