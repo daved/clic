@@ -1,12 +1,14 @@
 package clic
 
 import (
+	"context"
+
 	"github.com/daved/flagset"
 )
 
 type Handler interface {
 	FlagSet() *flagset.FlagSet
-	HandleCommand(*Clic) error
+	HandleCommand(context.Context, *Clic) error
 }
 
 type Clic struct {
@@ -38,9 +40,13 @@ func (c *Clic) Parse(args []string) error {
 	return parse(c, args, "")
 }
 
-func (c *Clic) HandleCalled() error {
+func (c *Clic) HandleCalled(ctx context.Context) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	called := lastCalled(c)
-	return called.h.HandleCommand(called)
+	return called.h.HandleCommand(ctx, called)
 }
 
 func (c *Clic) Parent() *Clic {
