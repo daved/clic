@@ -28,6 +28,10 @@ Usage:
       {{- if and $i $subsStarted}}|{{end}}{{$sub.Name}}{{$subsStarted = true}}
     {{- end}}{{if $cur.Subs}}{{$rightBrack}}{{end}}
     {{- if $clic.Meta.ArgsHint}}{{$clic.Meta.ArgsHint}}{{end}}
+    {{- if $clic.Meta.CmdDesc}}
+
+      {{$clic.Meta.CmdDesc}}
+    {{- end}}
   {{- end}}
 {{- end}}
 
