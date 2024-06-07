@@ -3,9 +3,9 @@ package clic
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"slices"
 	"strings"
+	"text/template"
 )
 
 type tmplData struct {
@@ -27,6 +27,7 @@ Usage:
       {{- if $sub.Meta.SkipUsage}}{{continue}}{{end}}
       {{- if and $i $subsStarted}}|{{end}}{{$sub.Name}}{{$subsStarted = true}}
     {{- end}}{{if $cur.Subs}}{{$rightBrack}}{{end}}
+    {{- if $clic.Meta.ArgsHint}}{{$clic.Meta.ArgsHint}}{{end}}
   {{- end}}
 {{- end}}
 
