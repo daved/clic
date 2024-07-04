@@ -20,12 +20,12 @@ var tmplText = strings.TrimSpace(`
 Usage:
 
 {{if .}}  {{end}}{{range $clic := .Called}}
-  {{- $clic.Name}} {{if $clic.FlagSet.Opts}}[FLAGS] {{end -}}
-  {{- if eq $cur.Name $clic.Name }}
+  {{- $clic.HandlerFlagSet.Name}} {{if $clic.HandlerFlagSet.Opts}}[FLAGS] {{end -}}
+  {{- if eq $cur.HandlerFlagSet.Name $clic.HandlerFlagSet.Name }}
     {{- if $cur.Meta.SubRequired}}{{$leftBrack = "{"}}{{$rightBrack = "}"}}{{end -}}
     {{- if $cur.Subs}}{{$leftBrack}}{{end}}{{range $i, $sub := $cur.Subs}}
       {{- if $sub.Meta.SkipUsage}}{{continue}}{{end}}
-      {{- if and $i $subsStarted}}|{{end}}{{$sub.Name}}{{$subsStarted = true}}
+      {{- if and $i $subsStarted}}|{{end}}{{$sub.HandlerFlagSet.Name}}{{$subsStarted = true}}
     {{- end}}{{if $cur.Subs}}{{$rightBrack}}{{end}}
     {{- if $clic.Meta.ArgsHint}}{{$clic.Meta.ArgsHint}}{{end}}
     {{- if $clic.Meta.CmdDesc}}
@@ -35,7 +35,7 @@ Usage:
   {{- end}}
 {{- end}}
 
-{{.Current.FlagSet.Usage}}
+{{.Current.HandlerFlagSet.Usage}}
 `)
 
 func (c *Clic) Usage() string {
@@ -66,8 +66,8 @@ func (c *Clic) Usage() string {
 func root(c *Clic) *Clic {
 	root := c
 
-	for root.Parent() != nil {
-		root = root.Parent()
+	for root.Parent != nil {
+		root = root.Parent
 	}
 
 	return root
@@ -77,9 +77,9 @@ func allCalled(c *Clic) []*Clic {
 	var all []*Clic
 	cur := c
 
-	for cur.Parent() != nil {
+	for cur.Parent != nil {
 		all = append(all, cur)
-		cur = cur.Parent()
+		cur = cur.Parent
 	}
 	all = append(all, cur)
 

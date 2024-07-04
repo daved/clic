@@ -70,6 +70,6 @@ func (cmd *SubCmd) FlagSet() *flagset.FlagSet {
 
 func (cmd *SubCmd) HandleCommand(ctx context.Context, c *clic.Clic) error {
 	fmt.Println(cmd.info)
-	fmt.Println(c.FlagSet().Args())
+	fmt.Println(c.HandlerFlagSet().Args())
 	return nil
 }
