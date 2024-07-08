@@ -21,12 +21,12 @@ var (
 // must expose both a FlagSet along with a HandleCommand function.
 type Handler interface {
 	FlagSet() *flagset.FlagSet
-	HandleCommand(context.Context, *Clic) error
+	HandleCommand(context.Context) error
 }
 
 // Clic contains a CLI command handler and subcommand handlers.
 type Clic struct {
-	h        Handler
+	Handler  Handler
 	Subs     []*Clic
 	IsCalled bool
 	Parent   *Clic
@@ -36,8 +36,8 @@ type Clic struct {
 // New returns a pointer to a newly constructed instance of a Clic.
 func New(h Handler, subs ...*Clic) *Clic {
 	c := &Clic{
-		h:    h,
-		Subs: subs,
+		Handler: h,
+		Subs:    subs,
 		Meta: map[string]any{
 			MetaKeySkipUsage:   false,
 			MetaKeySubRequired: false,
@@ -52,31 +52,31 @@ func New(h Handler, subs ...*Clic) *Clic {
 }
 
 // Parse receives command line interface arguments. Parse should be run before
-// HandleCalled is run or else *Clic cannot know which handler the user
-// requires. Parse is a separate function from HandleCalled so that calling code
-// can express behavior in between parsing and handling.
+// Called or Handle so that *Clic can know which handler the user requires.
+// Parse is a separate function from Called and Handle so that calling code can
+// express behavior in between parsing and handling.
 func (c *Clic) Parse(args []string) error {
 	return parse(c, args, "")
 }
 
-// HandleCalled will run the handler that was selected during Parse processing.
-func (c *Clic) HandleCalled(ctx context.Context) error {
+// Called returns the command that was selected during Parse processing.
+func (c *Clic) Called() *Clic {
+	return lastCalled(c)
+}
+
+// Handle runs the Handler of the command that was selected during Parse
+// processing.
+func (c *Clic) Handle(ctx context.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	called := lastCalled(c)
-	return called.h.HandleCommand(ctx, called)
-}
-
-// HandlerFlagSet exposes the underlying FlagSet being used by the Handler.
-func (c *Clic) HandlerFlagSet() *flagset.FlagSet {
-	return c.h.FlagSet()
+	return c.Called().Handler.HandleCommand(ctx)
 }
 
 func parse(c *Clic, args []string, cmd string) error {
 	// TODO: validate sub commands, if any
-	fs := c.h.FlagSet()
+	fs := c.Handler.FlagSet()
 
 	c.IsCalled = cmd == "" || cmd == fs.Name()
 	if !c.IsCalled {

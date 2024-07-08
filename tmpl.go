@@ -20,12 +20,12 @@ var tmplText = strings.TrimSpace(`
 Usage:
 
 {{if .}}  {{end}}{{range $clic := .Called}}
-  {{- $clic.HandlerFlagSet.Name}} {{if $clic.HandlerFlagSet.Opts}}[FLAGS] {{end -}}
-  {{- if eq $cur.HandlerFlagSet.Name $clic.HandlerFlagSet.Name }}
+  {{- $clic.Handler.FlagSet.Name}} {{if $clic.Handler.FlagSet.Opts}}[FLAGS] {{end -}}
+  {{- if eq $cur.Handler.FlagSet.Name $clic.Handler.FlagSet.Name }}
     {{- if $cur.Meta.SubRequired}}{{$leftBrack = "{"}}{{$rightBrack = "}"}}{{end -}}
     {{- if $cur.Subs}}{{$leftBrack}}{{end}}{{range $i, $sub := $cur.Subs}}
       {{- if $sub.Meta.SkipUsage}}{{continue}}{{end}}
-      {{- if and $i $subsStarted}}|{{end}}{{$sub.HandlerFlagSet.Name}}{{$subsStarted = true}}
+      {{- if and $i $subsStarted}}|{{end}}{{$sub.Handler.FlagSet.Name}}{{$subsStarted = true}}
     {{- end}}{{if $cur.Subs}}{{$rightBrack}}{{end}}
     {{- if $clic.Meta.ArgsHint}}{{$clic.Meta.ArgsHint}}{{end}}
     {{- if $clic.Meta.CmdDesc}}
@@ -35,7 +35,7 @@ Usage:
   {{- end}}
 {{- end}}
 
-{{.Current.HandlerFlagSet.Usage}}
+{{.Current.Handler.FlagSet.Usage}}
 `)
 
 func (c *Clic) Usage() string {

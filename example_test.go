@@ -17,7 +17,7 @@ func Example() {
 		return
 	}
 
-	if err := rootCmd.HandleCalled(context.Background()); err != nil {
+	if err := rootCmd.Handle(context.Background()); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -32,16 +32,14 @@ type RootCmd struct {
 }
 
 func NewRootCmd(name string) *RootCmd {
-	return &RootCmd{
-		fs: flagset.New(name),
-	}
+	return &RootCmd{fs: flagset.New(name)}
 }
 
 func (cmd *RootCmd) FlagSet() *flagset.FlagSet {
 	return cmd.fs
 }
 
-func (cmd *RootCmd) HandleCommand(ctx context.Context, c *clic.Clic) error {
+func (cmd *RootCmd) HandleCommand(ctx context.Context) error {
 	fmt.Println("hit root")
 	return nil
 }
@@ -68,8 +66,7 @@ func (cmd *SubCmd) FlagSet() *flagset.FlagSet {
 	return cmd.fs
 }
 
-func (cmd *SubCmd) HandleCommand(ctx context.Context, c *clic.Clic) error {
-	fmt.Println(cmd.info)
-	fmt.Println(c.HandlerFlagSet().Args())
+func (cmd *SubCmd) HandleCommand(ctx context.Context) error {
+	fmt.Printf("%s\n%v\n", cmd.info, cmd.fs.Args())
 	return nil
 }
