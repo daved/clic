@@ -49,7 +49,7 @@ func (c *Clic) Usage() string {
 
 	buf := &bytes.Buffer{}
 
-	tmpl, err := tmpl.Parse(tmplText)
+	tmpl, err := tmpl.Parse(c.tmplTxt)
 	if err != nil {
 		fmt.Fprintf(buf, "cli command: template error: %v\n", err)
 		return buf.String()

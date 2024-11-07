@@ -9,6 +9,8 @@ import (
 	"github.com/daved/flagset"
 )
 
+// MetaKey constants document which keys can be used in a Clic Meta map that
+// are leveraged by this package's usage template.
 var (
 	MetaKeySkipUsage   = "SkipUsage"
 	MetaKeySubRequired = "SubRequired"
@@ -31,6 +33,7 @@ type Clic struct {
 	IsCalled bool
 	Parent   *Clic
 	Meta     map[string]any
+	tmplTxt  string
 }
 
 // New returns a pointer to a newly constructed instance of a Clic.
@@ -42,6 +45,7 @@ func New(h Handler, subs ...*Clic) *Clic {
 			MetaKeySkipUsage:   false,
 			MetaKeySubRequired: false,
 		},
+		tmplTxt: tmplText,
 	}
 
 	for _, sub := range c.Subs {
@@ -49,6 +53,11 @@ func New(h Handler, subs ...*Clic) *Clic {
 	}
 
 	return c
+}
+
+// SetUsageTemplate allows callers to override the base template text.
+func (c *Clic) SetUsageTemplate(txt string) {
+	c.tmplTxt = txt
 }
 
 // Parse receives command line interface arguments. Parse should be run before
