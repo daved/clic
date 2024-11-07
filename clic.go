@@ -5,8 +5,6 @@ package clic
 
 import (
 	"context"
-	"errors"
-	"reflect"
 
 	"github.com/daved/flagset"
 )
@@ -26,35 +24,6 @@ var (
 type Handler interface {
 	FlagSet() *flagset.FlagSet
 	HandleCommand(context.Context) error
-}
-
-type Arg struct {
-	Val  any
-	Opt  bool
-	Name string
-	Desc string
-}
-
-type ArgSet struct {
-	as []*Arg
-}
-
-func NewArgSet() *ArgSet {
-	return &ArgSet{}
-}
-
-func (as *ArgSet) Parse(args []string) error {
-	return nil
-}
-
-func (as *ArgSet) Arg(val any, opt bool, name, desc string) *ArgSet {
-	as.as = append(as.as, &Arg{val, opt, name, desc})
-	return as
-}
-
-// ArgSetProvider describes types that share an ArgSet.
-type ArgSetProvider interface {
-	ArgSet() *ArgSet
 }
 
 // Clic contains a CLI command handler and subcommand handlers.
@@ -97,25 +66,14 @@ func (c *Clic) SetUsageTemplate(txt string) {
 // express behavior in between parsing and handling.
 func (c *Clic) Parse(args []string) error {
 	if _, err := parse(c, args, ""); err != nil {
-		return err
+		return err // TODO: wrap
 	}
 
 	last := lastCalled(c)
-	asp, ok := last.Handler.(ArgSetProvider)
-	if !ok {
-		return nil
-	}
-	for i, arg := range asp.ArgSet().as {
-		v := reflect.ValueOf(arg.Val)
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
+	if asp, ok := last.Handler.(ArgSetProvider); ok {
+		if err := asp.ArgSet().Parse(last.Handler.FlagSet().Args()); err != nil {
+			return err // TODO: wrap
 		}
-
-		if !v.CanSet() {
-			return errors.New("ouch") // TODO: set this
-		}
-
-		v.SetString(last.Handler.FlagSet().Arg(i))
 	}
 
 	return nil
