@@ -3,27 +3,29 @@ package clic_test
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/daved/clic"
 	"github.com/daved/flagset"
 )
 
 func Example() {
-	subCmd := clic.New(NewSubCmd("sub"))
-	rootCmd := clic.New(NewRootCmd("root"), subCmd)
+	subCmd := clic.New(NewSubCmd("subcmd"))
+	rootCmd := clic.New(NewRootCmd(), subCmd)
 
-	if err := rootCmd.Parse([]string{"sub", "--info=flag", "arrrg"}); err != nil {
+	// parse the cli command `myapp subcmd --info=flagval arrrg`
+	if err := rootCmd.Parse([]string{"subcmd", "--info=flagval", "arrrg"}); err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
 
 	if err := rootCmd.Handle(context.Background()); err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
 
 	// Output:
-	// flag
+	// flagval
 	// [arrrg]
 }
 
@@ -31,8 +33,8 @@ type RootCmd struct {
 	fs *flagset.FlagSet
 }
 
-func NewRootCmd(name string) *RootCmd {
-	return &RootCmd{fs: flagset.New(name)}
+func NewRootCmd() *RootCmd {
+	return &RootCmd{fs: flagset.New("root")}
 }
 
 func (cmd *RootCmd) FlagSet() *flagset.FlagSet {

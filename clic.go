@@ -5,6 +5,8 @@ package clic
 
 import (
 	"context"
+	"errors"
+	"reflect"
 
 	"github.com/daved/flagset"
 )
@@ -15,7 +17,7 @@ var (
 	MetaKeySkipUsage   = "SkipUsage"
 	MetaKeySubRequired = "SubRequired"
 	MetaKeyCmdDesc     = "CmdDesc"
-	MetaKeyArgsHint    = "ArgsHint"
+	MetaKeyArgsHint    = "ArgsHint" // TODO: probably replace with args name/desc
 )
 
 // Handler describes types that can be used to handle CLI command requests. Due
@@ -24,6 +26,35 @@ var (
 type Handler interface {
 	FlagSet() *flagset.FlagSet
 	HandleCommand(context.Context) error
+}
+
+type Arg struct {
+	Val  any
+	Opt  bool
+	Name string
+	Desc string
+}
+
+type ArgSet struct {
+	as []*Arg
+}
+
+func NewArgSet() *ArgSet {
+	return &ArgSet{}
+}
+
+func (as *ArgSet) Parse(args []string) error {
+	return nil
+}
+
+func (as *ArgSet) Arg(val any, opt bool, name, desc string) *ArgSet {
+	as.as = append(as.as, &Arg{val, opt, name, desc})
+	return as
+}
+
+// ArgSetProvider describes types that share an ArgSet.
+type ArgSetProvider interface {
+	ArgSet() *ArgSet
 }
 
 // Clic contains a CLI command handler and subcommand handlers.
@@ -65,7 +96,29 @@ func (c *Clic) SetUsageTemplate(txt string) {
 // Parse is a separate function from Called and Handle so that calling code can
 // express behavior in between parsing and handling.
 func (c *Clic) Parse(args []string) error {
-	return parse(c, args, "")
+	if _, err := parse(c, args, ""); err != nil {
+		return err
+	}
+
+	last := lastCalled(c)
+	asp, ok := last.Handler.(ArgSetProvider)
+	if !ok {
+		return nil
+	}
+	for i, arg := range asp.ArgSet().as {
+		v := reflect.ValueOf(arg.Val)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+
+		if !v.CanSet() {
+			return errors.New("ouch") // TODO: set this
+		}
+
+		v.SetString(last.Handler.FlagSet().Arg(i))
+	}
+
+	return nil
 }
 
 // Called returns the command that was selected during Parse processing.
@@ -83,35 +136,39 @@ func (c *Clic) Handle(ctx context.Context) error {
 	return c.Called().Handler.HandleCommand(ctx)
 }
 
-func parse(c *Clic, args []string, cmd string) error {
+func parse(c *Clic, args []string, cmd string) (hasSubCalled bool, err error) {
 	// TODO: validate sub commands, if any
 	fs := c.Handler.FlagSet()
 
 	c.IsCalled = cmd == "" || cmd == fs.Name()
 	if !c.IsCalled {
-		return nil
+		return false, nil
 	}
 
 	if err := fs.Parse(args); err != nil {
-		return NewParseError(err, c)
+		return false, NewParseError(err, c)
 	}
 	args = fs.Args()
 
 	nArg := fs.NArg()
 	if nArg == 0 {
-		return nil
+		return false, nil
 	}
 
 	cmd = args[len(args)-nArg]
 	args = args[len(args)-nArg+1:]
 
 	for _, sub := range c.Subs {
-		if err := parse(sub, args, cmd); err != nil {
-			return err
+		isSubCalled, subErr := parse(sub, args, cmd)
+		if subErr != nil {
+			return hasSubCalled, subErr
+		}
+		if isSubCalled {
+			hasSubCalled = true
 		}
 	}
 
-	return nil
+	return hasSubCalled, nil
 }
 
 func lastCalled(c *Clic) *Clic {
