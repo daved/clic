@@ -1,88 +1,36 @@
 package clic
 
 import (
-	"bytes"
-	"fmt"
-	"slices"
 	"strings"
-	"text/template"
 )
 
 type tmplData struct {
-	Root    *Clic
 	Current *Clic
 	Called  []*Clic
 }
 
 var tmplText = strings.TrimSpace(`
-{{- $cur := .Current -}}{{- $subsStarted := false -}}
+{{- $cur := .Current -}}
 {{- $leftBrack := "[" -}}{{- $rightBrack := "]" -}}
 Usage:
 
 {{if .}}  {{end}}{{range $clic := .Called}}
-  {{- $clic.Handler.FlagSet.Name}} {{if $clic.Handler.FlagSet.Opts}}[FLAGS] {{end -}}
-  {{- if eq $cur.Handler.FlagSet.Name $clic.Handler.FlagSet.Name }}
-    {{- if $cur.Meta.SubRequired}}{{$leftBrack = "{"}}{{$rightBrack = "}"}}{{end -}}
+  {{- $clic.FlagSet.Name}} {{if $clic.FlagSet.Opts}}[FLAGS] {{end -}}
+  {{- if eq $cur.FlagSet.Name $clic.FlagSet.Name }}
+    {{- if $cur.SubRequired}}{{$leftBrack = "{"}}{{$rightBrack = "}"}}{{end -}}
     {{- if $cur.Subs}}{{$leftBrack}}{{end}}{{range $i, $sub := $cur.Subs}}
-      {{- if $sub.Meta.SkipUsage}}{{continue}}{{end}}
-      {{- if and $i $subsStarted}}|{{end}}{{$sub.Handler.FlagSet.Name}}{{$subsStarted = true}}
-    {{- end}}{{if $cur.Subs}}{{$rightBrack}}{{end}}
-    {{- if $clic.Meta.ArgsHint}}{{$clic.Meta.ArgsHint}}{{end}}
-    {{- if $clic.Meta.CmdDesc}}
+      {{- if $sub.UsageConfig.Skip}}{{continue}}{{end}}
+      {{- if $i}}|{{end}}{{$sub.FlagSet.Name}}
+    {{- end}}{{/* range sub */}}
+    {{- if $cur.Subs}}{{if $cur.ArgSet.Args}}|{{end}}{{end}}
+    {{- range $i, $arg := $cur.ArgSet.Args}}{{if $i}} {{end}}{{$arg.Hint}}{{end}}
+    {{- if $cur.Subs}}{{$rightBrack}}{{end}}
+    {{- if $clic.UsageConfig.CmdDesc}}
 
-      {{$clic.Meta.CmdDesc}}
-    {{- end}}
-  {{- end}}
-{{- end}}
+      {{$clic.UsageConfig.CmdDesc}}
+    {{- end}}{{/* CmdDesc */}}
+  {{- end}}{{/* eq Name Name */}}
+{{- end}}{{/* range clic */}}
 
-{{.Current.Handler.FlagSet.Usage}}
+{{.Current.FlagSet.Usage}}
 `)
-
-func (c *Clic) Usage() string {
-	data := &tmplData{
-		Root:    root(c),
-		Current: c,
-		Called:  allCalled(c),
-	}
-
-	tmpl := template.New("clic")
-
-	buf := &bytes.Buffer{}
-
-	tmpl, err := tmpl.Parse(c.tmplTxt)
-	if err != nil {
-		fmt.Fprintf(buf, "cli command: template error: %v\n", err)
-		return buf.String()
-	}
-
-	if err := tmpl.Execute(buf, data); err != nil {
-		fmt.Fprintf(buf, "cli command: template error: %v\n", err)
-		return buf.String()
-	}
-
-	return buf.String()
-}
-
-func root(c *Clic) *Clic {
-	root := c
-
-	for root.Parent != nil {
-		root = root.Parent
-	}
-
-	return root
-}
-
-func allCalled(c *Clic) []*Clic {
-	var all []*Clic
-	cur := c
-
-	for cur.Parent != nil {
-		all = append(all, cur)
-		cur = cur.Parent
-	}
-	all = append(all, cur)
-
-	slices.Reverse(all)
-	return all
-}

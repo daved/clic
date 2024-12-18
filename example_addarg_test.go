@@ -6,15 +6,17 @@ import (
 	"os"
 
 	"github.com/daved/clic"
-	"github.com/daved/flagset"
 )
 
-func ExampleClic_AddArg() {
-	subCmd := clic.New(NewPrintFirstArgCmd("printarg"))
-	rootCmd := clic.New(NewRootCmd(), subCmd)
+func ExampleClic_ArgSet() {
+	rootCmd := NewRootClic("myapp",
+		NewPrintFirstArgClic("printarg"),
+	)
 
 	// parse the cli command `myapp printarg --info=flagval arrrg`
-	if err := rootCmd.Parse([]string{"printarg", "--info=flagval", "arrrg"}); err != nil {
+	args := []string{"myapp", "printarg", "--info=flagval", "arrrg"}
+
+	if err := rootCmd.Parse(args[1:]); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -25,43 +27,31 @@ func ExampleClic_AddArg() {
 	}
 
 	// Output:
-	// flagval
-	// First Arg = arrrg
+	// info = flagval
+	// first arg = arrrg
 }
 
-type PrintFirstArgCmd struct {
-	fs   *flagset.FlagSet
-	as   *clic.ArgSet
-	Info string
-	Arg  string
+type PrintFirstArg struct {
+	info string
+	arg  string
 }
 
-func NewPrintFirstArgCmd(name string) *PrintFirstArgCmd {
-	fs := flagset.New(name)
-	as := clic.NewArgSet()
-
-	cmd := &PrintFirstArgCmd{
-		fs:   fs,
-		as:   as,
-		Info: "default",
-		Arg:  "unset",
+func NewPrintFirstArgClic(name string) *clic.Clic {
+	cmd := &PrintFirstArg{
+		info: "default",
+		arg:  "unset",
 	}
 
-	fs.Opt(&cmd.Info, "i|info", "set info value")
-	as.Arg(&cmd.Arg, true, "first_arg", "First arg, will be printed.")
+	c := clic.New(cmd, name)
 
-	return cmd
+	c.FlagSet.Opt(&cmd.info, "i|info", "set info value")
+	c.ArgSet.Arg(&cmd.arg, true, "first_arg", "First arg, will be printed.")
+
+	return c
 }
 
-func (cmd *PrintFirstArgCmd) FlagSet() *flagset.FlagSet {
-	return cmd.fs
-}
-
-func (cmd *PrintFirstArgCmd) ArgSet() *clic.ArgSet {
-	return cmd.as
-}
-
-func (cmd *PrintFirstArgCmd) HandleCommand(ctx context.Context) error {
-	fmt.Printf("%s\nFirst Arg = %v\n", cmd.Info, cmd.Arg)
+func (cmd *PrintFirstArg) HandleCommand(ctx context.Context) error {
+	fmt.Printf("info = %s\n", cmd.info)
+	fmt.Printf("first arg = %v\n", cmd.arg)
 	return nil
 }

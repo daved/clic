@@ -6,69 +6,55 @@ import (
 	"os"
 
 	"github.com/daved/clic"
-	"github.com/daved/flagset"
 )
 
 func Example() {
-	subCmd := clic.New(NewSubCmd("subcmd"))
-	rootCmd := clic.New(NewRootCmd(), subCmd)
+	cmd := NewRootClic("myapp",
+		NewSubClic("subcmd"),
+	)
 
-	// parse the cli command `myapp subcmd --info=flagval arrrg`
-	if err := rootCmd.Parse([]string{"subcmd", "--info=flagval", "arrrg"}); err != nil {
+	// parse the cli command `myapp subcmd --info=flagval`
+	args := []string{"myapp", "subcmd", "--info=flagval"}
+
+	if err := cmd.Parse(args[1:]); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if err := rootCmd.Handle(context.Background()); err != nil {
+	if err := cmd.Handle(context.Background()); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	// Output:
-	// flagval
-	// [arrrg]
+	// info = flagval
 }
 
-type RootCmd struct {
-	fs *flagset.FlagSet
+type Root struct{}
+
+func NewRootClic(name string, subs ...*clic.Clic) *clic.Clic {
+	return clic.New(&Root{}, name, subs...)
 }
 
-func NewRootCmd() *RootCmd {
-	return &RootCmd{fs: flagset.New("root")}
-}
-
-func (cmd *RootCmd) FlagSet() *flagset.FlagSet {
-	return cmd.fs
-}
-
-func (cmd *RootCmd) HandleCommand(ctx context.Context) error {
+func (cmd *Root) HandleCommand(ctx context.Context) error {
 	fmt.Println("hit root")
 	return nil
 }
 
-type SubCmd struct {
-	fs   *flagset.FlagSet
+type Sub struct {
 	info string
 }
 
-func NewSubCmd(name string) *SubCmd {
-	fs := flagset.New(name)
+func NewSubClic(name string) *clic.Clic {
+	cmd := &Sub{info: "default"}
 
-	cmd := &SubCmd{
-		fs:   fs,
-		info: "default",
-	}
+	c := clic.New(cmd, name)
+	c.FlagSet.Opt(&cmd.info, "i|info", "set info value")
 
-	fs.Opt(&cmd.info, "i|info", "set info value")
-
-	return cmd
+	return c
 }
 
-func (cmd *SubCmd) FlagSet() *flagset.FlagSet {
-	return cmd.fs
-}
-
-func (cmd *SubCmd) HandleCommand(ctx context.Context) error {
-	fmt.Printf("%s\n%v\n", cmd.info, cmd.fs.Args())
+func (cmd *Sub) HandleCommand(ctx context.Context) error {
+	fmt.Printf("info = %s\n", cmd.info)
 	return nil
 }

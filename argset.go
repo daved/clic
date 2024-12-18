@@ -7,23 +7,29 @@ import (
 
 type Arg struct {
 	Val  any
-	Opt  bool
+	Req  bool
 	Name string
 	Desc string
+	Meta map[string]any
+	Hint string
 }
 
 type ArgSet struct {
-	as []*Arg
+	Args []*Arg
 }
 
-func NewArgSet() *ArgSet {
+func newArgSet() *ArgSet {
 	return &ArgSet{}
 }
 
-func (as *ArgSet) Parse(args []string) error {
-	for i, arg := range as.as {
+func (as *ArgSet) parse(args []string) error {
+	for i, arg := range as.Args {
 		if len(args) <= i {
-			return errors.New("not enough args") // TODO: check if args are opt, etc.
+			if !arg.Req {
+				continue
+			}
+
+			return NewArgSetError(NewArgMissingError(arg))
 		}
 
 		v := reflect.ValueOf(arg.Val)
@@ -32,21 +38,33 @@ func (as *ArgSet) Parse(args []string) error {
 		}
 
 		if !v.CanSet() {
-			return errors.New("cannot set argset val") // TODO: set this
+			return NewArgSetError(errors.New("unsettable value used for arg"))
 		}
 
 		v.SetString(args[i])
+		// TODO: handle other types
 	}
 
 	return nil
 }
 
-func (as *ArgSet) Arg(val any, opt bool, name, desc string) *ArgSet {
-	as.as = append(as.as, &Arg{val, opt, name, desc})
-	return as
-}
+func (as *ArgSet) Arg(val any, req bool, name, desc string) *Arg {
+	a := &Arg{
+		Val:  val,
+		Req:  req,
+		Name: name,
+		Desc: desc,
+		Meta: make(map[string]any),
+	}
 
-// ArgSetProvider describes types that share an ArgSet.
-type ArgSetProvider interface {
-	ArgSet() *ArgSet
+	as.Args = append(as.Args, a)
+
+	lEnc, rEnc := "[", "]" // enclosures
+	if a.Req {
+		lEnc, rEnc = "<", ">"
+	}
+
+	a.Hint = lEnc + a.Name + rEnc
+
+	return a
 }
