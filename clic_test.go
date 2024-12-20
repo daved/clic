@@ -3,6 +3,7 @@ package clic
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -44,7 +45,7 @@ func TestClicParse(t *testing.T) {
 		args  []string
 		out   string
 		vals  []any
-		err   bool
+		cause error
 	}{
 		{
 			scope: scopeA,
@@ -62,7 +63,7 @@ func TestClicParse(t *testing.T) {
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 			},
-			err: true,
+			cause: CauseParseArgMissing,
 		},
 		{
 			scope: scopeA,
@@ -84,15 +85,11 @@ func TestClicParse(t *testing.T) {
 			c := tc.scope.clicFn(buf, &ptrs)
 
 			err := c.Parse(tc.args[1:])
-			if tc.err {
-				if err == nil {
-					t.Fatalf("parse error: got %v, want failure", err)
-				} else {
-					return
-				}
+			if !errors.Is(err, tc.cause) {
+				t.Fatalf("parse error: got %v, want %v", err, tc.cause)
 			}
-			if !tc.err && err != nil {
-				t.Fatalf("parse error: got %v, want success", err)
+			if err != nil {
+				return
 			}
 
 			_ = c.Handle(context.Background())
