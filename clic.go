@@ -10,6 +10,7 @@ import (
 	"slices"
 	"text/template"
 
+	errs "github.com/daved/clic/clicerrs"
 	"github.com/daved/flagset"
 )
 
@@ -59,6 +60,13 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 	return c
 }
 
+var (
+	CauseParseInFlagSet   = &errs.FlagSetError{}
+	CauseParseInArgSet    = &errs.ArgSetError{}
+	CauseParseArgMissing  = &errs.ArgMissingError{}
+	CauseParseSubRequired = &errs.SubRequiredError{}
+)
+
 // Parse receives command line interface arguments. Parse should be run before
 // Called or Handle so that *Clic can know which handler the user requires.
 // Parse is a separate function from Called and Handle so that calling code can
@@ -73,7 +81,7 @@ func (c *Clic) Parse(args []string) error {
 	last := lastCalled(c)
 	// fmt.Println("last called:", last.FlagSet.FlagSet.Name())
 	if err := last.ArgSet.parse(last.FlagSet.FlagSet.Args()); err != nil {
-		return NewError(NewParseError(err, last), last)
+		return NewError(errs.NewParseError(errs.NewFlagSetError(err)), last)
 	}
 
 	return nil
@@ -128,14 +136,14 @@ func parse(c *Clic, args []string, cmd string) (hasSubCalled bool, err error) {
 	}
 
 	if err := fs.Parse(args); err != nil {
-		return false, NewError(NewParseError(err, c), c)
+		return false, NewError(errs.NewParseError(err), c)
 	}
 	args = fs.Args()
 
 	nArg := fs.NArg()
 	if nArg == 0 {
 		if c.SubRequired {
-			return false, NewError(NewParseError(NewSubRequiredError(c), c), c)
+			return false, NewError(errs.NewParseError(errs.NewSubRequiredError()), c)
 		}
 
 		return false, nil

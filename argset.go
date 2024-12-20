@@ -3,6 +3,8 @@ package clic
 import (
 	"errors"
 	"reflect"
+
+	errs "github.com/daved/clic/clicerrs"
 )
 
 type Arg struct {
@@ -29,7 +31,7 @@ func (as *ArgSet) parse(args []string) error {
 				continue
 			}
 
-			return NewArgSetError(NewArgMissingError(arg))
+			return errs.NewArgSetError(errs.NewArgMissingError(arg.Name))
 		}
 
 		v := reflect.ValueOf(arg.Val)
@@ -38,7 +40,7 @@ func (as *ArgSet) parse(args []string) error {
 		}
 
 		if !v.CanSet() {
-			return NewArgSetError(errors.New("unsettable value used for arg"))
+			return errs.NewArgSetError(errors.New("unsettable value used for arg"))
 		}
 
 		v.SetString(args[i])
