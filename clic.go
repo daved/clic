@@ -80,7 +80,6 @@ func (c *Clic) Parse(args []string) error {
 	}
 
 	last := lastCalled(c)
-	// fmt.Println("last called:", last.FlagSet.FlagSet.Name())
 	if err := last.ArgSet.parse(last.FlagSet.FlagSet.Args()); err != nil {
 		return NewError(errs.NewParseError(errs.NewFlagSetError(err)), last)
 	}
@@ -130,7 +129,6 @@ func (c *Clic) Usage() string {
 var errParseNoMatch = errors.New("parse: no command match")
 
 func parse(c *Clic, args []string, cmdName string) (err error) {
-	// fmt.Println("Args:", args, "Cmd:", cmd, "Flagset name:", c.FlagSet.FlagSet.Name())
 	fs := c.FlagSet.FlagSet
 
 	c.called = cmdName == "" || cmdName == fs.Name()
