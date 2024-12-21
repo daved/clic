@@ -25,7 +25,7 @@ func TestClicParse(t *testing.T) {
 	}
 
 	scopeA := parseScope{
-		name: "clic arg0-req arg1-opt",
+		name: "clic subcmd-opt arg0-req arg1-opt",
 		clicFn: func(buf *bytes.Buffer, ptrs *[]any) *Clic {
 			return NewCmdClic(buf, "myapp", nil,
 				NewCmdClic(buf, "subcmd",
@@ -39,6 +39,23 @@ func TestClicParse(t *testing.T) {
 		},
 	}
 
+	scopeB := parseScope{
+		name: "clic subcmd-req arg0-req arg1-opt",
+		clicFn: func(buf *bytes.Buffer, ptrs *[]any) *Clic {
+			c := NewCmdClic(buf, "myapp", nil,
+				NewCmdClic(buf, "subcmd",
+					func(as *ArgSet) {
+						*ptrs = defaultPtrs("default0", "default1")
+						as.Arg((*ptrs)[0], true, "first_arg", "")
+						as.Arg((*ptrs)[1], false, "second_arg", "")
+					},
+				),
+			)
+			c.SubRequired = true
+			return c
+		},
+	}
+
 	tt := []struct {
 		scope parseScope
 		name  string
@@ -49,7 +66,7 @@ func TestClicParse(t *testing.T) {
 	}{
 		{
 			scope: scopeA,
-			name:  "args both",
+			name:  "subcmd one args both",
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 				"first", "second",
@@ -59,7 +76,7 @@ func TestClicParse(t *testing.T) {
 		},
 		{
 			scope: scopeA,
-			name:  "args none",
+			name:  "subcmd one args none",
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 			},
@@ -67,13 +84,40 @@ func TestClicParse(t *testing.T) {
 		},
 		{
 			scope: scopeA,
-			name:  "args first",
+			name:  "subcmd one args first",
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 				"first",
 			},
 			out:  "subcmd",
 			vals: []any{"first", "default1"},
+		},
+		{
+			scope: scopeB,
+			name:  "subcmd one args both",
+			args: []string{
+				"myapp", "subcmd", "--info=flagval",
+				"first", "second",
+			},
+			out:  "subcmd",
+			vals: []any{"first", "second"},
+		},
+		{
+			scope: scopeB,
+			name:  "subcmd none args both",
+			args: []string{
+				"myapp", "--info=flagval",
+				"first", "second",
+			},
+			cause: CauseParseSubRequired,
+		},
+		{
+			scope: scopeB,
+			name:  "subcmd none args none",
+			args: []string{
+				"myapp",
+			},
+			cause: CauseParseSubRequired,
 		},
 	}
 

@@ -6,6 +6,7 @@ package clic
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"text/template"
@@ -74,7 +75,7 @@ var (
 func (c *Clic) Parse(args []string) error {
 	applyRecursiveOpts(c, nil)
 
-	if _, err := parse(c, args, c.FlagSet.FlagSet.Name()); err != nil {
+	if err := parse(c, args, c.FlagSet.FlagSet.Name()); err != nil {
 		return err
 	}
 
@@ -126,43 +127,48 @@ func (c *Clic) Usage() string {
 	return buf.String()
 }
 
-func parse(c *Clic, args []string, cmd string) (hasSubCalled bool, err error) {
+var errParseNoMatch = errors.New("parse: no command match")
+
+func parse(c *Clic, args []string, cmdName string) (err error) {
 	// fmt.Println("Args:", args, "Cmd:", cmd, "Flagset name:", c.FlagSet.FlagSet.Name())
 	fs := c.FlagSet.FlagSet
 
-	c.called = cmd == "" || cmd == fs.Name()
+	c.called = cmdName == "" || cmdName == fs.Name()
 	if !c.called {
-		return false, nil
+		return errParseNoMatch
 	}
 
 	if err := fs.Parse(args); err != nil {
-		return false, NewError(errs.NewParseError(err), c)
+		return NewError(errs.NewParseError(err), c)
 	}
-	args = fs.Args()
+	subCmdArgs := fs.Args()
 
-	nArg := fs.NArg()
-	if nArg == 0 {
+	if len(subCmdArgs) == 0 {
 		if c.SubRequired {
-			return false, NewError(errs.NewParseError(errs.NewSubRequiredError()), c)
+			return NewError(errs.NewParseError(errs.NewSubRequiredError()), c)
 		}
 
-		return false, nil
+		return nil
 	}
 
-	cmd = args[len(args)-nArg]
-	args = args[len(args)-nArg+1:]
+	subCmdName := subCmdArgs[0]
+	subCmdArgs = subCmdArgs[1:]
 
 	for _, sub := range c.Subs {
-		isSubCalled, subErr := parse(sub, args, cmd)
-		if subErr != nil {
-			return hasSubCalled, subErr
+		if err := parse(sub, subCmdArgs, subCmdName); err != nil {
+			if errors.Is(err, errParseNoMatch) {
+				continue
+			}
+			return err
 		}
-		if isSubCalled {
-			hasSubCalled = true
-		}
+		return nil
 	}
 
-	return hasSubCalled, nil // TODO: use hasSubCalled to return subreqerror above
+	if c.SubRequired {
+		return NewError(errs.NewParseError(errs.NewSubRequiredError()), c)
+	}
+
+	return nil
 }
 
 func lastCalled(c *Clic) *Clic {
