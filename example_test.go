@@ -8,7 +8,7 @@ import (
 	"github.com/daved/clic"
 )
 
-func ExampleClic_Arg() {
+func Example() {
 	subCmdHandler := NewPrintFirstArg()
 	subCmd := clic.New(subCmdHandler, "printarg")
 
