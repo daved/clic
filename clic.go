@@ -12,7 +12,7 @@ import (
 	"text/template"
 
 	errs "github.com/daved/clic/clicerrs"
-	"github.com/daved/flagset"
+	"github.com/daved/clic/flagset"
 )
 
 // Handler describes types that can be used to handle CLI command requests. Due
@@ -31,7 +31,7 @@ type UsageConfig struct {
 // Clic contains a CLI command handler and subcommand handlers.
 type Clic struct {
 	Handler     Handler
-	FlagSet     *FlagSet
+	FlagSet     *flagset.FlagSet
 	ArgSet      *ArgSet
 	Subs        []*Clic
 	Parent      *Clic
@@ -45,7 +45,7 @@ type Clic struct {
 func New(h Handler, name string, subs ...*Clic) *Clic {
 	c := &Clic{
 		Handler: h,
-		FlagSet: &FlagSet{FlagSet: flagset.New(name)},
+		FlagSet: flagset.New(name),
 		ArgSet:  newArgSet(),
 		Subs:    subs,
 		UsageConfig: &UsageConfig{
@@ -73,7 +73,7 @@ var (
 // Parse is a separate function from Called and Handle so that calling code can
 // express behavior in between parsing and handling.
 func (c *Clic) Parse(args []string) error {
-	applyRecursiveOpts(c, nil)
+	applyRecursiveFlags(c.Subs, c.FlagSet)
 
 	if err := parse(c, args, c.FlagSet.FlagSet.Name()); err != nil {
 		return err
@@ -124,6 +124,14 @@ func (c *Clic) Usage() string {
 	}
 
 	return buf.String()
+}
+
+func (c *Clic) Flag(val any, names, usage string) *flagset.Flag {
+	return c.FlagSet.Flag(val, names, usage)
+}
+
+func (c *Clic) FlagRecursive(val any, names, usage string) *flagset.Flag {
+	return c.FlagSet.FlagRecursive(val, names, usage)
 }
 
 var errParseNoMatch = errors.New("parse: no command match")
@@ -190,4 +198,12 @@ func allCalled(c *Clic) []*Clic {
 	slices.Reverse(all)
 
 	return all
+}
+
+func applyRecursiveFlags(subs []*Clic, src *flagset.FlagSet) {
+	for _, sub := range subs {
+		flagset.ApplyRecursiveFlags(sub.FlagSet, src)
+		applyRecursiveFlags(sub.Subs, src)
+		applyRecursiveFlags(sub.Subs, sub.FlagSet)
+	}
 }

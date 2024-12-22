@@ -44,7 +44,7 @@ func NewPrintFirstArgClic(name string) *clic.Clic {
 
 	c := clic.New(cmd, name)
 
-	c.FlagSet.Opt(&cmd.info, "i|info", "set info value")
+	c.Flag(&cmd.info, "i|info", "set info value")
 	c.ArgSet.Arg(&cmd.arg, true, "first_arg", "First arg, will be printed.")
 
 	return c

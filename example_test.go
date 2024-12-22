@@ -49,7 +49,7 @@ func NewSubClic(name string) *clic.Clic {
 	cmd := &Sub{info: "default"}
 
 	c := clic.New(cmd, name)
-	c.FlagSet.Opt(&cmd.info, "i|info", "set info value")
+	c.Flag(&cmd.info, "i|info", "set info value")
 
 	return c
 }

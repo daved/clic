@@ -171,8 +171,8 @@ func NewCmdClic(buf *bytes.Buffer, name string, fn setupFunc, subs ...*Clic) *Cl
 	var num int
 
 	c := New(cmd, name, subs...)
-	c.FlagSet.FlagSet.Opt(&info, "info|i", "")
-	c.FlagSet.FlagSet.Opt(&num, "num|n", "")
+	c.Flag(&info, "info|i", "")
+	c.Flag(&num, "num|n", "")
 
 	if fn != nil {
 		fn(c.ArgSet)

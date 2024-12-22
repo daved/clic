@@ -15,7 +15,7 @@ var tmplText = strings.TrimSpace(`
 Usage:
 
 {{if .}}  {{end}}{{range $clic := .Called}}
-  {{- $clic.FlagSet.Name}} {{if $clic.FlagSet.Opts}}[FLAGS] {{end -}}
+  {{- $clic.FlagSet.Name}} {{if $clic.FlagSet.Flags}}[FLAGS] {{end -}}
   {{- if eq $cur.FlagSet.Name $clic.FlagSet.Name }}
     {{- if $cur.SubRequired}}{{$leftBrack = "{"}}{{$rightBrack = "}"}}{{end -}}
     {{- if $cur.Subs}}{{$leftBrack}}{{end}}{{range $i, $sub := $cur.Subs}}
