@@ -1,4 +1,4 @@
-package clic
+package argset
 
 import (
 	"errors"
@@ -20,11 +20,11 @@ type ArgSet struct {
 	Args []*Arg
 }
 
-func newArgSet() *ArgSet {
+func New() *ArgSet {
 	return &ArgSet{}
 }
 
-func (as *ArgSet) parse(args []string) error {
+func (as *ArgSet) Parse(args []string) error {
 	for i, arg := range as.Args {
 		if len(args) <= i {
 			if !arg.Req {

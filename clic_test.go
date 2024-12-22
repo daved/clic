@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/daved/clic/argset"
 )
 
 func defaultPtrs[T any](args ...T) []any {
@@ -29,7 +31,7 @@ func TestClicParse(t *testing.T) {
 		clicFn: func(buf *bytes.Buffer, ptrs *[]any) *Clic {
 			return NewCmdClic(buf, "myapp", nil,
 				NewCmdClic(buf, "subcmd",
-					func(as *ArgSet) {
+					func(as *argset.ArgSet) {
 						*ptrs = defaultPtrs("default0", "default1")
 						as.Arg((*ptrs)[0], true, "first_arg", "")
 						as.Arg((*ptrs)[1], false, "second_arg", "")
@@ -44,7 +46,7 @@ func TestClicParse(t *testing.T) {
 		clicFn: func(buf *bytes.Buffer, ptrs *[]any) *Clic {
 			c := NewCmdClic(buf, "myapp", nil,
 				NewCmdClic(buf, "subcmd",
-					func(as *ArgSet) {
+					func(as *argset.ArgSet) {
 						*ptrs = defaultPtrs("default0", "default1")
 						as.Arg((*ptrs)[0], true, "first_arg", "")
 						as.Arg((*ptrs)[1], false, "second_arg", "")
@@ -159,7 +161,7 @@ type Cmd struct {
 	name string
 }
 
-type setupFunc func(*ArgSet)
+type setupFunc func(*argset.ArgSet)
 
 func NewCmdClic(buf *bytes.Buffer, name string, fn setupFunc, subs ...*Clic) *Clic {
 	cmd := &Cmd{

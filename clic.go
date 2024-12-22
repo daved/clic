@@ -11,6 +11,7 @@ import (
 	"slices"
 	"text/template"
 
+	"github.com/daved/clic/argset"
 	errs "github.com/daved/clic/clicerrs"
 	"github.com/daved/clic/flagset"
 )
@@ -32,7 +33,7 @@ type UsageConfig struct {
 type Clic struct {
 	Handler     Handler
 	FlagSet     *flagset.FlagSet
-	ArgSet      *ArgSet
+	ArgSet      *argset.ArgSet
 	Subs        []*Clic
 	Parent      *Clic
 	called      bool
@@ -46,7 +47,7 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 	c := &Clic{
 		Handler: h,
 		FlagSet: flagset.New(name),
-		ArgSet:  newArgSet(),
+		ArgSet:  argset.New(),
 		Subs:    subs,
 		UsageConfig: &UsageConfig{
 			TmplText: tmplText,
@@ -80,7 +81,7 @@ func (c *Clic) Parse(args []string) error {
 	}
 
 	last := lastCalled(c)
-	if err := last.ArgSet.parse(last.FlagSet.FlagSet.Args()); err != nil {
+	if err := last.ArgSet.Parse(last.FlagSet.FlagSet.Args()); err != nil {
 		return NewError(errs.NewParseError(errs.NewFlagSetError(err)), last)
 	}
 
@@ -132,6 +133,10 @@ func (c *Clic) Flag(val any, names, usage string) *flagset.Flag {
 
 func (c *Clic) FlagRecursive(val any, names, usage string) *flagset.Flag {
 	return c.FlagSet.FlagRecursive(val, names, usage)
+}
+
+func (c *Clic) Arg(val any, req bool, name, desc string) *argset.Arg {
+	return c.ArgSet.Arg(val, req, name, desc)
 }
 
 var errParseNoMatch = errors.New("parse: no command match")
