@@ -23,6 +23,12 @@ type Handler interface {
 	HandleCommand(context.Context) error
 }
 
+type HandlerFunc func(context.Context) error
+
+func (f HandlerFunc) HandleCommand(ctx context.Context) error {
+	return f(ctx)
+}
+
 type UsageConfig struct {
 	Skip     bool
 	TmplText string
@@ -60,6 +66,10 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 	}
 
 	return c
+}
+
+func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
+	return New(f, name, subs...)
 }
 
 var (
