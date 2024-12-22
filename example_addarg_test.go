@@ -8,10 +8,15 @@ import (
 	"github.com/daved/clic"
 )
 
-func ExampleClic_ArgSet() {
-	rootCmd := NewRootClic("myapp",
-		NewPrintFirstArgClic("printarg"),
-	)
+func ExampleClic_Arg() {
+	subCmdHandler := NewPrintFirstArg()
+	subCmd := clic.New(subCmdHandler, "printarg")
+
+	subCmd.Flag(&subCmdHandler.info, "i|info", "set info value")
+	subCmd.Arg(&subCmdHandler.arg, true, "first_arg", "First arg, will be printed.")
+
+	rootCmdHandler := &Root{}
+	rootCmd := clic.New(rootCmdHandler, "myapp", subCmd)
 
 	// parse the cli command `myapp printarg --info=flagval arrrg`
 	args := []string{"myapp", "printarg", "--info=flagval", "arrrg"}
@@ -31,23 +36,23 @@ func ExampleClic_ArgSet() {
 	// first arg = arrrg
 }
 
+type Root struct{}
+
+func (cmd *Root) HandleCommand(ctx context.Context) error {
+	fmt.Println("hit root")
+	return nil
+}
+
 type PrintFirstArg struct {
 	info string
 	arg  string
 }
 
-func NewPrintFirstArgClic(name string) *clic.Clic {
-	cmd := &PrintFirstArg{
+func NewPrintFirstArg() *PrintFirstArg {
+	return &PrintFirstArg{
 		info: "default",
 		arg:  "unset",
 	}
-
-	c := clic.New(cmd, name)
-
-	c.Flag(&cmd.info, "i|info", "set info value")
-	c.ArgSet.Arg(&cmd.arg, true, "first_arg", "First arg, will be printed.")
-
-	return c
 }
 
 func (cmd *PrintFirstArg) HandleCommand(ctx context.Context) error {
