@@ -1,11 +1,24 @@
 package argset
 
 import (
-	"errors"
-	"reflect"
+	"encoding"
+	"strconv"
+	"time"
 
 	errs "github.com/daved/clic/clicerrs"
 )
+
+type TextMarshalUnmarshaler interface {
+	encoding.TextMarshaler
+	encoding.TextUnmarshaler
+}
+
+type ArgValue interface {
+	String()
+	Set(string) error
+}
+
+type ArgFunc func(string) error
 
 type Arg struct {
 	Val  any
@@ -34,17 +47,76 @@ func (as *ArgSet) Parse(args []string) error {
 			return errs.NewArgSetError(errs.NewArgMissingError(arg.Name))
 		}
 
-		v := reflect.ValueOf(arg.Val)
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
-		}
+		raw := args[i]
 
-		if !v.CanSet() {
-			return errs.NewArgSetError(errors.New("unsettable value used for arg"))
-		}
+		switch v := arg.Val.(type) {
+		case *string:
+			*v = raw
 
-		v.SetString(args[i])
-		// TODO: handle other types
+		case *bool:
+			b, err := strconv.ParseBool(raw)
+			if err != nil {
+				return errs.NewArgSetError(err)
+			}
+			*v = b
+
+		case *int:
+			n, err := strconv.Atoi(raw)
+			if err != nil {
+				return errs.NewArgSetError(err)
+			}
+			*v = n
+
+		case *int64:
+			n, err := strconv.ParseInt(raw, 10, 0)
+			if err != nil {
+				return errs.NewArgSetError(err)
+			}
+			*v = n
+
+		case *uint:
+			n, err := strconv.ParseUint(raw, 10, 0)
+			if err != nil {
+				return errs.NewArgSetError(err)
+			}
+			*v = uint(n)
+
+		case *uint64:
+			n, err := strconv.ParseUint(raw, 10, 0)
+			if err != nil {
+				return errs.NewArgSetError(err)
+			}
+			*v = n
+
+		case *float64:
+			f, err := strconv.ParseFloat(raw, 64)
+			if err != nil {
+				return errs.NewArgSetError(err)
+			}
+			*v = f
+
+		case *time.Duration:
+			d, err := time.ParseDuration(raw)
+			if err != nil {
+				return errs.NewArgSetError(err)
+			}
+			*v = d
+
+		case TextMarshalUnmarshaler:
+			if err := v.UnmarshalText([]byte(raw)); err != nil {
+				return err
+			}
+
+		case ArgValue:
+			if err := v.Set(raw); err != nil {
+				return err
+			}
+
+		case ArgFunc:
+			if err := v(raw); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
