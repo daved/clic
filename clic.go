@@ -16,6 +16,10 @@ import (
 	"github.com/daved/clic/flagset"
 )
 
+// TODO: consider adding default arg value in tmpl
+// TODO: consider adding descriptions of available subcmds to tmpl, optionally skippable
+// TODO: consider what subcmd grouping and sorting looks like
+
 // Handler describes types that can be used to handle CLI command requests. Due
 // to the nature of CLI commands containing both arguments and flags, a handler
 // must expose both a FlagSet along with a HandleCommand function.
