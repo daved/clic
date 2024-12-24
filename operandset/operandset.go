@@ -26,15 +26,40 @@ type Operand struct {
 }
 
 type OperandSet struct {
-	Operands []*Operand
+	ops []*Operand
 }
 
 func New() *OperandSet {
 	return &OperandSet{}
 }
 
+func (os *OperandSet) Operands() []*Operand {
+	return os.ops
+}
+
+func (os *OperandSet) Operand(val any, req bool, name, desc string) *Operand {
+	o := &Operand{
+		Val:  val,
+		Req:  req,
+		Name: name,
+		Desc: desc,
+		Meta: map[string]any{},
+	}
+
+	os.ops = append(os.ops, o)
+
+	lEnc, rEnc := "[", "]" // enclosures
+	if o.Req {
+		lEnc, rEnc = "<", ">"
+	}
+
+	o.Tag = lEnc + o.Name + rEnc
+
+	return o
+}
+
 func (os *OperandSet) Parse(args []string) error {
-	for i, op := range os.Operands {
+	for i, op := range os.ops {
 		if len(args) <= i {
 			if !op.Req {
 				continue
@@ -116,25 +141,4 @@ func (os *OperandSet) Parse(args []string) error {
 	}
 
 	return nil
-}
-
-func (os *OperandSet) Operand(val any, req bool, name, desc string) *Operand {
-	o := &Operand{
-		Val:  val,
-		Req:  req,
-		Name: name,
-		Desc: desc,
-		Meta: map[string]any{},
-	}
-
-	os.Operands = append(os.Operands, o)
-
-	lEnc, rEnc := "[", "]" // enclosures
-	if o.Req {
-		lEnc, rEnc = "<", ">"
-	}
-
-	o.Tag = lEnc + o.Name + rEnc
-
-	return o
 }
