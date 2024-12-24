@@ -39,7 +39,7 @@ func (cmd *PriոtCmd) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
 	c := clic.New(cmd, name, subs...)
 
 	c.Flag(&cmd.actCnf.Info, "i|info", "Set additional info.")
-	c.Arg(&cmd.actCnf.Value, true, "first_arg", "Value to be printed.")
+	c.Operand(&cmd.actCnf.Value, true, "first_opnd", "Value to be printed.")
 
 	return c
 }

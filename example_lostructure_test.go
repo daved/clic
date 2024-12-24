@@ -52,7 +52,7 @@ func Example_loStructure() {
 	printClic := clic.New(printCmd, "print")
 
 	printClic.Flag(&printCmd.info, "i|info", "Set additional info.")
-	printClic.Arg(&printCmd.value, true, "first_arg", "Value to be printed.")
+	printClic.Operand(&printCmd.value, true, "first_opnd", "Value to be printed.")
 
 	rootClic := clic.New(NewRootCmd(out), "myapp", printClic)
 

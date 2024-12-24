@@ -1,4 +1,4 @@
-package argset
+package operandset
 
 import (
 	"encoding"
@@ -14,9 +14,9 @@ type TextMarshalUnmarshaler interface {
 	encoding.TextUnmarshaler
 }
 
-type ArgFunc func(string) error
+type OperandFunc func(string) error
 
-type Arg struct {
+type Operand struct {
 	Val  any
 	Req  bool
 	Name string
@@ -25,76 +25,76 @@ type Arg struct {
 	Meta map[string]any
 }
 
-type ArgSet struct {
-	Args []*Arg
+type OperandSet struct {
+	Operands []*Operand
 }
 
-func New() *ArgSet {
-	return &ArgSet{}
+func New() *OperandSet {
+	return &OperandSet{}
 }
 
-func (as *ArgSet) Parse(args []string) error {
-	for i, arg := range as.Args {
+func (os *OperandSet) Parse(args []string) error {
+	for i, op := range os.Operands {
 		if len(args) <= i {
-			if !arg.Req {
+			if !op.Req {
 				continue
 			}
 
-			return errs.NewArgSetError(errs.NewArgMissingError(arg.Name))
+			return errs.NewOperandSetError(errs.NewOperandMissingError(op.Name))
 		}
 
 		raw := args[i]
 
-		switch v := arg.Val.(type) {
+		switch v := op.Val.(type) {
 		case *string:
 			*v = raw
 
 		case *bool:
 			b, err := strconv.ParseBool(raw)
 			if err != nil {
-				return errs.NewArgSetError(err)
+				return errs.NewOperandSetError(err)
 			}
 			*v = b
 
 		case *int:
 			n, err := strconv.Atoi(raw)
 			if err != nil {
-				return errs.NewArgSetError(err)
+				return errs.NewOperandSetError(err)
 			}
 			*v = n
 
 		case *int64:
 			n, err := strconv.ParseInt(raw, 10, 0)
 			if err != nil {
-				return errs.NewArgSetError(err)
+				return errs.NewOperandSetError(err)
 			}
 			*v = n
 
 		case *uint:
 			n, err := strconv.ParseUint(raw, 10, 0)
 			if err != nil {
-				return errs.NewArgSetError(err)
+				return errs.NewOperandSetError(err)
 			}
 			*v = uint(n)
 
 		case *uint64:
 			n, err := strconv.ParseUint(raw, 10, 0)
 			if err != nil {
-				return errs.NewArgSetError(err)
+				return errs.NewOperandSetError(err)
 			}
 			*v = n
 
 		case *float64:
 			f, err := strconv.ParseFloat(raw, 64)
 			if err != nil {
-				return errs.NewArgSetError(err)
+				return errs.NewOperandSetError(err)
 			}
 			*v = f
 
 		case *time.Duration:
 			d, err := time.ParseDuration(raw)
 			if err != nil {
-				return errs.NewArgSetError(err)
+				return errs.NewOperandSetError(err)
 			}
 			*v = d
 
@@ -108,7 +108,7 @@ func (as *ArgSet) Parse(args []string) error {
 				return err
 			}
 
-		case ArgFunc:
+		case OperandFunc:
 			if err := v(raw); err != nil {
 				return err
 			}
@@ -118,8 +118,8 @@ func (as *ArgSet) Parse(args []string) error {
 	return nil
 }
 
-func (as *ArgSet) Arg(val any, req bool, name, desc string) *Arg {
-	a := &Arg{
+func (os *OperandSet) Operand(val any, req bool, name, desc string) *Operand {
+	o := &Operand{
 		Val:  val,
 		Req:  req,
 		Name: name,
@@ -127,14 +127,14 @@ func (as *ArgSet) Arg(val any, req bool, name, desc string) *Arg {
 		Meta: map[string]any{},
 	}
 
-	as.Args = append(as.Args, a)
+	os.Operands = append(os.Operands, o)
 
 	lEnc, rEnc := "[", "]" // enclosures
-	if a.Req {
+	if o.Req {
 		lEnc, rEnc = "<", ">"
 	}
 
-	a.Tag = lEnc + a.Name + rEnc
+	o.Tag = lEnc + o.Name + rEnc
 
-	return a
+	return o
 }

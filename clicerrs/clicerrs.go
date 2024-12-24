@@ -59,38 +59,38 @@ func (e *FlagSetError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }
 
-type ArgSetError struct {
+type OperandSetError struct {
 	child error
 }
 
-func NewArgSetError(child error) *ArgSetError {
-	return &ArgSetError{child}
+func NewOperandSetError(child error) *OperandSetError {
+	return &OperandSetError{child}
 }
 
-func (e *ArgSetError) Error() string {
-	return fmt.Sprintf("non-command args: %v", e.child)
+func (e *OperandSetError) Error() string {
+	return fmt.Sprintf("operand: %v", e.child)
 }
 
-func (e *ArgSetError) Unwrap() error {
+func (e *OperandSetError) Unwrap() error {
 	return e.child
 }
 
-func (e *ArgSetError) Is(err error) bool {
+func (e *OperandSetError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }
 
-type ArgMissingError struct {
+type OperandMissingError struct {
 	name string
 }
 
-func NewArgMissingError(name string) *ArgMissingError {
-	return &ArgMissingError{name}
+func NewOperandMissingError(name string) *OperandMissingError {
+	return &OperandMissingError{name}
 }
 
-func (e *ArgMissingError) Error() string {
-	return fmt.Sprintf("missing an expected arg: %s", e.name)
+func (e *OperandMissingError) Error() string {
+	return fmt.Sprintf("missing an expected operand: %s", e.name)
 }
 
-func (e *ArgMissingError) Is(err error) bool {
+func (e *OperandMissingError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }

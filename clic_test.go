@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/daved/clic/argset"
+	"github.com/daved/clic/operandset"
 )
 
 func defaultPtrs[T any](args ...T) []any {
@@ -27,14 +27,14 @@ func TestClicParse(t *testing.T) {
 	}
 
 	scopeA := parseScope{
-		name: "clic subcmd-opt arg0-req arg1-opt",
+		name: "clic subcmd-opt opnd0-req opnd1-opt",
 		clicFn: func(buf *bytes.Buffer, ptrs *[]any) *Clic {
 			return NewCmdClic(buf, "myapp", nil,
 				NewCmdClic(buf, "subcmd",
-					func(as *argset.ArgSet) {
+					func(os *operandset.OperandSet) {
 						*ptrs = defaultPtrs("default0", "default1")
-						as.Arg((*ptrs)[0], true, "first_arg", "")
-						as.Arg((*ptrs)[1], false, "second_arg", "")
+						os.Operand((*ptrs)[0], true, "first_opnd", "")
+						os.Operand((*ptrs)[1], false, "second_opnd", "")
 					},
 				),
 			)
@@ -42,14 +42,14 @@ func TestClicParse(t *testing.T) {
 	}
 
 	scopeB := parseScope{
-		name: "clic subcmd-req arg0-req arg1-opt",
+		name: "clic subcmd-req opnd0-req opnd1-opt",
 		clicFn: func(buf *bytes.Buffer, ptrs *[]any) *Clic {
 			c := NewCmdClic(buf, "myapp", nil,
 				NewCmdClic(buf, "subcmd",
-					func(as *argset.ArgSet) {
+					func(os *operandset.OperandSet) {
 						*ptrs = defaultPtrs("default0", "default1")
-						as.Arg((*ptrs)[0], true, "first_arg", "")
-						as.Arg((*ptrs)[1], false, "second_arg", "")
+						os.Operand((*ptrs)[0], true, "first_opnd", "")
+						os.Operand((*ptrs)[1], false, "second_opnd", "")
 					},
 				),
 			)
@@ -68,7 +68,7 @@ func TestClicParse(t *testing.T) {
 	}{
 		{
 			scope: scopeA,
-			name:  "subcmd one args both",
+			name:  "subcmd-one opnds-both",
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 				"first", "second",
@@ -78,15 +78,15 @@ func TestClicParse(t *testing.T) {
 		},
 		{
 			scope: scopeA,
-			name:  "subcmd one args none",
+			name:  "subcmd-one opnds-none",
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 			},
-			cause: CauseParseArgMissing,
+			cause: CauseParseOperandMissing,
 		},
 		{
 			scope: scopeA,
-			name:  "subcmd one args first",
+			name:  "subcmd-one opnds-first",
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 				"first",
@@ -96,7 +96,7 @@ func TestClicParse(t *testing.T) {
 		},
 		{
 			scope: scopeB,
-			name:  "subcmd one args both",
+			name:  "subcmd-one opnds-both",
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 				"first", "second",
@@ -106,7 +106,7 @@ func TestClicParse(t *testing.T) {
 		},
 		{
 			scope: scopeB,
-			name:  "subcmd none args both",
+			name:  "subcmd-none opnds-both",
 			args: []string{
 				"myapp", "--info=flagval",
 				"first", "second",
@@ -115,7 +115,7 @@ func TestClicParse(t *testing.T) {
 		},
 		{
 			scope: scopeB,
-			name:  "subcmd none args none",
+			name:  "subcmd-none opnds-none",
 			args: []string{
 				"myapp",
 			},
@@ -161,7 +161,7 @@ type Cmd struct {
 	name string
 }
 
-type setupFunc func(*argset.ArgSet)
+type setupFunc func(*operandset.OperandSet)
 
 func NewCmdClic(buf *bytes.Buffer, name string, fn setupFunc, subs ...*Clic) *Clic {
 	cmd := &Cmd{
@@ -177,7 +177,7 @@ func NewCmdClic(buf *bytes.Buffer, name string, fn setupFunc, subs ...*Clic) *Cl
 	c.Flag(&num, "num|n", "")
 
 	if fn != nil {
-		fn(c.ArgSet)
+		fn(c.OperandSet)
 	}
 
 	return c

@@ -11,9 +11,9 @@ import (
 	"slices"
 	"text/template"
 
-	"github.com/daved/clic/argset"
 	errs "github.com/daved/clic/clicerrs"
 	"github.com/daved/clic/flagset"
+	"github.com/daved/clic/operandset"
 )
 
 // TODO: consider adding default arg value in tmpl
@@ -43,7 +43,7 @@ type UsageConfig struct {
 type Clic struct {
 	Handler     Handler
 	FlagSet     *flagset.FlagSet
-	ArgSet      *argset.ArgSet
+	OperandSet  *operandset.OperandSet
 	Subs        []*Clic
 	Parent      *Clic
 	called      bool
@@ -55,10 +55,10 @@ type Clic struct {
 // New returns a pointer to a newly constructed instance of a Clic.
 func New(h Handler, name string, subs ...*Clic) *Clic {
 	c := &Clic{
-		Handler: h,
-		FlagSet: flagset.New(name),
-		ArgSet:  argset.New(),
-		Subs:    subs,
+		Handler:    h,
+		FlagSet:    flagset.New(name),
+		OperandSet: operandset.New(),
+		Subs:       subs,
 		UsageConfig: &UsageConfig{
 			TmplText: tmplText,
 		},
@@ -77,10 +77,10 @@ func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
 }
 
 var (
-	CauseParseInFlagSet   = &errs.FlagSetError{}
-	CauseParseInArgSet    = &errs.ArgSetError{}
-	CauseParseArgMissing  = &errs.ArgMissingError{}
-	CauseParseSubRequired = &errs.SubRequiredError{}
+	CauseParseInFlagSet      = &errs.FlagSetError{}
+	CauseParseInOperandSet   = &errs.OperandSetError{}
+	CauseParseOperandMissing = &errs.OperandMissingError{}
+	CauseParseSubRequired    = &errs.SubRequiredError{}
 )
 
 // Parse receives command line interface arguments. Parse should be run before
@@ -95,7 +95,7 @@ func (c *Clic) Parse(args []string) error {
 	}
 
 	last := lastCalled(c)
-	if err := last.ArgSet.Parse(last.FlagSet.FlagSet.Args()); err != nil {
+	if err := last.OperandSet.Parse(last.FlagSet.FlagSet.Args()); err != nil {
 		return NewError(errs.NewParseError(errs.NewFlagSetError(err)), last)
 	}
 
@@ -149,8 +149,8 @@ func (c *Clic) FlagRecursive(val any, names, usage string) *flagset.Flag {
 	return c.FlagSet.FlagRecursive(val, names, usage)
 }
 
-func (c *Clic) Arg(val any, req bool, name, desc string) *argset.Arg {
-	return c.ArgSet.Arg(val, req, name, desc)
+func (c *Clic) Operand(val any, req bool, name, desc string) *operandset.Operand {
+	return c.OperandSet.Operand(val, req, name, desc)
 }
 
 var errParseNoMatch = errors.New("parse: no command match")
