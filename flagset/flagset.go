@@ -5,6 +5,7 @@ import "github.com/daved/flagset"
 type Flag = flagset.Flag
 
 type recFlag struct {
+	flag  *flagset.Flag
 	val   any
 	names string
 	usage string
@@ -26,6 +27,7 @@ func (fs *FlagSet) FlagRecursive(val any, names, usage string) *flagset.Flag {
 	flag := fs.FlagSet.Flag(val, names, usage)
 
 	rFlag := recFlag{
+		flag:  flag,
 		val:   val,
 		names: names,
 		usage: usage,
@@ -37,9 +39,12 @@ func (fs *FlagSet) FlagRecursive(val any, names, usage string) *flagset.Flag {
 }
 
 func ApplyRecursiveFlags(dstFS, srcFS *FlagSet) {
-	for _, recOpt := range srcFS.recFlags {
-		flag := dstFS.Flag(recOpt.val, recOpt.names, recOpt.usage)
-		for k, v := range recOpt.meta {
+	for _, recFlag := range srcFS.recFlags {
+		flag := dstFS.Flag(recFlag.val, recFlag.names, recFlag.usage)
+		flag.TypeHint = recFlag.flag.TypeHint
+		flag.DefaultHint = recFlag.flag.DefaultHint
+
+		for k, v := range recFlag.meta {
 			flag.Meta[k] = v
 		}
 	}
