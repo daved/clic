@@ -1,4 +1,2 @@
-github.com/daved/flagset v0.0.0-20241216042441-f7ce37ddc616 h1:3RBMxxhrohOu5LHyZHY7yZtGr4BBVreyfT6mGvXW4e0=
-github.com/daved/flagset v0.0.0-20241216042441-f7ce37ddc616/go.mod h1:PKdNYDQo5ThKGBMAdNwoyRElFHbg/MKZsw1oPlH99vU=
-github.com/daved/flagset v0.0.0-20241222070037-715005833b65 h1:JXUgTjlSbXtYiDJI5AzNh5CjQLFyb4+NbKLQWLrIuoY=
-github.com/daved/flagset v0.0.0-20241222070037-715005833b65/go.mod h1:PKdNYDQo5ThKGBMAdNwoyRElFHbg/MKZsw1oPlH99vU=
+github.com/daved/flagset v0.0.0-20241224054626-7a927c4613df h1:CPThVVxNmMS/uma0XCPvrF2TwYA4SGcnlxjuXEvnfyY=
+github.com/daved/flagset v0.0.0-20241224054626-7a927c4613df/go.mod h1:PKdNYDQo5ThKGBMAdNwoyRElFHbg/MKZsw1oPlH99vU=
