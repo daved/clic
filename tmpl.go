@@ -22,8 +22,8 @@ Usage:
       {{- if $sub.UsageConfig.Skip}}{{continue}}{{end}}
       {{- if $i}}|{{end}}{{$sub.FlagSet.Name}}
     {{- end}}{{/* range sub */}}
-    {{- if $cur.Subs}}{{if $cur.ArgSet.Args}}|{{end}}{{end}}
-    {{- range $i, $arg := $cur.ArgSet.Args}}{{if $i}} {{end}}{{$arg.Tag}}{{end}}
+    {{- if and $cur.Subs $cur.OperandSet.Operands}}|{{end}}
+    {{- range $i, $op := $cur.OperandSet.Operands}}{{if $i}} {{end}}{{$op.Tag}}{{end}}
     {{- if $cur.Subs}}{{$rightBrack}}{{end}}
     {{- if $clic.UsageConfig.CmdDesc}}
 
