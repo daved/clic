@@ -23,7 +23,7 @@ Usage:
       {{- if $i}}|{{end}}{{$sub.FlagSet.Name}}
     {{- end}}{{/* range sub */}}
     {{- if $cur.Subs}}{{if $cur.ArgSet.Args}}|{{end}}{{end}}
-    {{- range $i, $arg := $cur.ArgSet.Args}}{{if $i}} {{end}}{{$arg.Hint}}{{end}}
+    {{- range $i, $arg := $cur.ArgSet.Args}}{{if $i}} {{end}}{{$arg.Tag}}{{end}}
     {{- if $cur.Subs}}{{$rightBrack}}{{end}}
     {{- if $clic.UsageConfig.CmdDesc}}
 

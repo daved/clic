@@ -2,6 +2,7 @@ package argset
 
 import (
 	"encoding"
+	"flag"
 	"strconv"
 	"time"
 
@@ -13,11 +14,6 @@ type TextMarshalUnmarshaler interface {
 	encoding.TextUnmarshaler
 }
 
-type ArgValue interface {
-	String()
-	Set(string) error
-}
-
 type ArgFunc func(string) error
 
 type Arg struct {
@@ -25,8 +21,8 @@ type Arg struct {
 	Req  bool
 	Name string
 	Desc string
+	Tag  string
 	Meta map[string]any
-	Hint string
 }
 
 type ArgSet struct {
@@ -107,7 +103,7 @@ func (as *ArgSet) Parse(args []string) error {
 				return err
 			}
 
-		case ArgValue:
+		case flag.Value:
 			if err := v.Set(raw); err != nil {
 				return err
 			}
@@ -128,7 +124,7 @@ func (as *ArgSet) Arg(val any, req bool, name, desc string) *Arg {
 		Req:  req,
 		Name: name,
 		Desc: desc,
-		Meta: make(map[string]any),
+		Meta: map[string]any{},
 	}
 
 	as.Args = append(as.Args, a)
@@ -138,7 +134,7 @@ func (as *ArgSet) Arg(val any, req bool, name, desc string) *Arg {
 		lEnc, rEnc = "<", ">"
 	}
 
-	a.Hint = lEnc + a.Name + rEnc
+	a.Tag = lEnc + a.Name + rEnc
 
 	return a
 }
