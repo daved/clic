@@ -1,36 +1,53 @@
 package operandset
 
 import (
-	"encoding"
 	"flag"
 	"strconv"
 	"time"
 
 	errs "github.com/daved/clic/clicerrs"
+	"github.com/daved/clic/operandset/vtypes"
 )
 
-type TextMarshalUnmarshaler interface {
-	encoding.TextMarshaler
-	encoding.TextUnmarshaler
-}
-
-type OperandFunc func(string) error
-
 type Operand struct {
-	Val  any
-	Req  bool
-	Name string
-	Desc string
+	val  any
+	req  bool
+	name string
+	desc string
 	Tag  string
 	Meta map[string]any
 }
 
-type OperandSet struct {
-	ops []*Operand
+func (o *Operand) Name() string {
+	return o.name
 }
 
-func New() *OperandSet {
-	return &OperandSet{}
+func (o *Operand) Required() bool {
+	return o.req
+}
+
+func (o *Operand) Description() string {
+	return o.desc
+}
+
+type OperandSet struct {
+	name    string
+	ops     []*Operand
+	raws    []string
+	tmplCfg *TmplConfig
+	Meta    map[string]any
+}
+
+func New(name string) *OperandSet {
+	return &OperandSet{
+		name:    name,
+		tmplCfg: NewDefaultTmplConfig(),
+		Meta:    map[string]any{},
+	}
+}
+
+func (os *OperandSet) Name() string {
+	return os.name
 }
 
 func (os *OperandSet) Operands() []*Operand {
@@ -38,22 +55,21 @@ func (os *OperandSet) Operands() []*Operand {
 }
 
 func (os *OperandSet) Operand(val any, req bool, name, desc string) *Operand {
+	lEnc, rEnc := "[", "]" // enclosures
+	if req {
+		lEnc, rEnc = "<", ">"
+	}
+
 	o := &Operand{
-		Val:  val,
-		Req:  req,
-		Name: name,
-		Desc: desc,
+		val:  val,
+		req:  req,
+		name: name,
+		desc: desc,
+		Tag:  lEnc + name + rEnc,
 		Meta: map[string]any{},
 	}
 
 	os.ops = append(os.ops, o)
-
-	lEnc, rEnc := "[", "]" // enclosures
-	if o.Req {
-		lEnc, rEnc = "<", ">"
-	}
-
-	o.Tag = lEnc + o.Name + rEnc
 
 	return o
 }
@@ -61,16 +77,17 @@ func (os *OperandSet) Operand(val any, req bool, name, desc string) *Operand {
 func (os *OperandSet) Parse(args []string) error {
 	for i, op := range os.ops {
 		if len(args) <= i {
-			if !op.Req {
+			if !op.req {
 				continue
 			}
 
-			return errs.NewOperandSetError(errs.NewOperandMissingError(op.Name))
+			return errs.NewOperandSetError(errs.NewOperandMissingError(op.name))
 		}
 
 		raw := args[i]
+		os.raws = append(os.raws, raw)
 
-		switch v := op.Val.(type) {
+		switch v := op.val.(type) {
 		case *string:
 			*v = raw
 
@@ -123,7 +140,7 @@ func (os *OperandSet) Parse(args []string) error {
 			}
 			*v = d
 
-		case TextMarshalUnmarshaler:
+		case vtypes.TextMarshalUnmarshaler:
 			if err := v.UnmarshalText([]byte(raw)); err != nil {
 				return err
 			}
@@ -133,7 +150,7 @@ func (os *OperandSet) Parse(args []string) error {
 				return err
 			}
 
-		case OperandFunc:
+		case vtypes.OperandFunc:
 			if err := v(raw); err != nil {
 				return err
 			}
@@ -141,4 +158,16 @@ func (os *OperandSet) Parse(args []string) error {
 	}
 
 	return nil
+}
+
+func (os *OperandSet) Parsed() []string {
+	return os.raws
+}
+
+func (os *OperandSet) SetUsageTemplating(tmplCfg *TmplConfig) {
+	os.tmplCfg = tmplCfg
+}
+
+func (os *OperandSet) Usage() string {
+	return executeTmpl(os.tmplCfg, &TmplData{OperandSet: os})
 }
