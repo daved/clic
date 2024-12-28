@@ -54,9 +54,7 @@ Operands for {{.OperandSet.Name}}:
 {{range $i, $op := .OperandSet.Operands}}
   {{if .}}  {{end}}{{if $op.Name}}{{NameHint $op}}{{end}}
         {{$op.Description}}
-{{end}}
-{{else}}
-{{- end}}
+{{end}}{{else}}{{- end}}
 `)
 
 	return &TmplConfig{
