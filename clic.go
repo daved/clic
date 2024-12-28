@@ -95,7 +95,7 @@ func (c *Clic) Parse(args []string) error {
 	}
 
 	last := lastCalled(c)
-	if err := last.OperandSet.Parse(last.FlagSet.FlagSet.Args()); err != nil {
+	if err := last.OperandSet.Parse(last.FlagSet.FlagSet.Operands()); err != nil {
 		return NewError(errs.NewParseError(errs.NewFlagSetError(err)), last)
 	}
 
@@ -166,7 +166,7 @@ func parse(c *Clic, args []string, cmdName string) (err error) {
 	if err := fs.Parse(args); err != nil {
 		return NewError(errs.NewParseError(err), c)
 	}
-	subCmdArgs := fs.Args()
+	subCmdArgs := fs.Operands()
 
 	if len(subCmdArgs) == 0 {
 		if c.SubRequired {
