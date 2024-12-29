@@ -3,7 +3,9 @@ package clic
 import (
 	"fmt"
 
-	"github.com/daved/clic/clicerrs"
+	"github.com/daved/clic/cerrs"
+	"github.com/daved/flagset"
+	"github.com/daved/flagset/fserrs"
 	"github.com/daved/operandset"
 	"github.com/daved/operandset/oserrs"
 )
@@ -30,8 +32,14 @@ func (e *Error) Clic() *Clic {
 }
 
 var (
-	CauseParseInFlagSet   = &clicerrs.FlagSetError{}
-	CauseOperandSet       = &operandset.Error{}
-	CauseOperandMissing   = &oserrs.OperandMissingError{}
-	CauseParseSubRequired = &clicerrs.SubRequiredError{}
+	CauseParse       = &cerrs.ParseError{}
+	CauseSubRequired = &cerrs.SubRequiredError{}
+
+	CauseFlagSet      = &flagset.Error{}
+	CauseParseFlagSet = &fserrs.ParseError{}
+
+	CauseOperandSet        = &operandset.Error{}
+	CauseParseOperand      = &oserrs.ParseError{}
+	CauseOperandMissing    = &oserrs.OperandMissingError{}
+	CauseConvertRawOperand = &oserrs.ConvertRawError{}
 )

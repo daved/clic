@@ -11,7 +11,7 @@ import (
 	"slices"
 	"text/template"
 
-	errs "github.com/daved/clic/clicerrs"
+	"github.com/daved/clic/cerrs"
 	"github.com/daved/clic/flagset"
 	"github.com/daved/operandset"
 )
@@ -89,7 +89,7 @@ func (c *Clic) Parse(args []string) error {
 
 	last := lastCalled(c)
 	if err := last.OperandSet.Parse(last.FlagSet.FlagSet.Operands()); err != nil {
-		return NewError(errs.NewParseError(errs.NewFlagSetError(err)), last)
+		return NewError(cerrs.NewParseError(err), last)
 	}
 
 	return nil
@@ -157,13 +157,13 @@ func parse(c *Clic, args []string, cmdName string) (err error) {
 	}
 
 	if err := fs.Parse(args); err != nil {
-		return NewError(errs.NewParseError(err), c)
+		return NewError(cerrs.NewParseError(err), c)
 	}
 	subCmdArgs := fs.Operands()
 
 	if len(subCmdArgs) == 0 {
 		if c.SubRequired {
-			return NewError(errs.NewParseError(errs.NewSubRequiredError()), c)
+			return NewError(cerrs.NewParseError(cerrs.NewSubRequiredError()), c)
 		}
 
 		return nil
@@ -183,7 +183,7 @@ func parse(c *Clic, args []string, cmdName string) (err error) {
 	}
 
 	if c.SubRequired {
-		return NewError(errs.NewParseError(errs.NewSubRequiredError()), c)
+		return NewError(cerrs.NewParseError(cerrs.NewSubRequiredError()), c)
 	}
 
 	return nil

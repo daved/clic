@@ -1,4 +1,4 @@
-package clicerrs
+package cerrs
 
 import (
 	"fmt"
@@ -36,25 +36,5 @@ func (e *SubRequiredError) Error() string {
 }
 
 func (e *SubRequiredError) Is(err error) bool {
-	return reflect.TypeOf(e) == reflect.TypeOf(err)
-}
-
-type FlagSetError struct {
-	child error
-}
-
-func NewFlagSetError(child error) *FlagSetError {
-	return &FlagSetError{child}
-}
-
-func (e *FlagSetError) Error() string {
-	return e.child.Error()
-}
-
-func (e *FlagSetError) Unwrap() error {
-	return e.child
-}
-
-func (e *FlagSetError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }
