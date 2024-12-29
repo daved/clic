@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	errs "github.com/daved/clic/clicerrs"
+	errs "github.com/daved/clic/operandset/oserrs"
 	"github.com/daved/clic/operandset/vtypes"
 )
 
@@ -75,17 +75,28 @@ func (os *OperandSet) Operand(val any, req bool, name, desc string) *Operand {
 }
 
 func (os *OperandSet) Parse(args []string) error {
-	for i, op := range os.ops {
+	os.raws = args
+
+	if err := parse(os.ops, args); err != nil {
+		return NewError(err)
+	}
+
+	return nil
+}
+
+func parse(ops []*Operand, args []string) error {
+	newError := errs.NewParseError
+
+	for i, op := range ops {
 		if len(args) <= i {
 			if !op.req {
 				continue
 			}
 
-			return errs.NewOperandSetError(errs.NewOperandMissingError(op.name))
+			return newError(errs.NewOperandMissingError(op.name))
 		}
 
 		raw := args[i]
-		os.raws = append(os.raws, raw)
 
 		switch v := op.val.(type) {
 		case *string:
@@ -94,65 +105,65 @@ func (os *OperandSet) Parse(args []string) error {
 		case *bool:
 			b, err := strconv.ParseBool(raw)
 			if err != nil {
-				return errs.NewOperandSetError(err)
+				return newError(errs.NewConvertRawError(err))
 			}
 			*v = b
 
 		case *int:
 			n, err := strconv.Atoi(raw)
 			if err != nil {
-				return errs.NewOperandSetError(err)
+				return newError(errs.NewConvertRawError(err))
 			}
 			*v = n
 
 		case *int64:
 			n, err := strconv.ParseInt(raw, 10, 0)
 			if err != nil {
-				return errs.NewOperandSetError(err)
+				return newError(errs.NewConvertRawError(err))
 			}
 			*v = n
 
 		case *uint:
 			n, err := strconv.ParseUint(raw, 10, 0)
 			if err != nil {
-				return errs.NewOperandSetError(err)
+				return newError(errs.NewConvertRawError(err))
 			}
 			*v = uint(n)
 
 		case *uint64:
 			n, err := strconv.ParseUint(raw, 10, 0)
 			if err != nil {
-				return errs.NewOperandSetError(err)
+				return newError(errs.NewConvertRawError(err))
 			}
 			*v = n
 
 		case *float64:
 			f, err := strconv.ParseFloat(raw, 64)
 			if err != nil {
-				return errs.NewOperandSetError(err)
+				return newError(errs.NewConvertRawError(err))
 			}
 			*v = f
 
 		case *time.Duration:
 			d, err := time.ParseDuration(raw)
 			if err != nil {
-				return errs.NewOperandSetError(err)
+				return newError(errs.NewConvertRawError(err))
 			}
 			*v = d
 
 		case vtypes.TextMarshalUnmarshaler:
 			if err := v.UnmarshalText([]byte(raw)); err != nil {
-				return err
+				return newError(errs.NewConvertRawError(err))
 			}
 
 		case flag.Value:
 			if err := v.Set(raw); err != nil {
-				return err
+				return newError(errs.NewConvertRawError(err))
 			}
 
 		case vtypes.OperandFunc:
 			if err := v(raw); err != nil {
-				return err
+				return newError(errs.NewConvertRawError(err))
 			}
 		}
 	}
