@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/daved/clic/operandset"
+	"github.com/daved/operandset"
 )
 
 func defaultPtrs[T any](args ...T) []any {
@@ -82,7 +82,7 @@ func TestClicParse(t *testing.T) {
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 			},
-			cause: CauseParseOperandMissing,
+			cause: CauseOperandMissing,
 		},
 		{
 			scope: scopeA,

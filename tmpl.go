@@ -32,5 +32,6 @@ Usage:
   {{- end}}{{/* eq Name Name */}}
 {{- end}}{{/* range clic */}}
 
-{{.Current.FlagSet.Usage}}
+{{if .Current.OperandSet.Operands}}{{.Current.OperandSet.Usage}}{{end}}
+{{- if .Current.FlagSet.Flags}}{{.Current.FlagSet.Usage}}{{end}}
 `)

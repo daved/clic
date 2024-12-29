@@ -8,7 +8,7 @@ type recFlag struct {
 	flag  *flagset.Flag
 	val   any
 	names string
-	usage string
+	desc  string
 	meta  map[string]any
 }
 
@@ -23,14 +23,14 @@ func New(name string) *FlagSet {
 	}
 }
 
-func (fs *FlagSet) FlagRecursive(val any, names, usage string) *flagset.Flag {
-	flag := fs.FlagSet.Flag(val, names, usage)
+func (fs *FlagSet) FlagRecursive(val any, names, desc string) *flagset.Flag {
+	flag := fs.FlagSet.Flag(val, names, desc)
 
 	rFlag := recFlag{
 		flag:  flag,
 		val:   val,
 		names: names,
-		usage: usage,
+		desc:  desc,
 		meta:  flag.Meta,
 	}
 	fs.recFlags = append(fs.recFlags, &rFlag)
@@ -40,9 +40,9 @@ func (fs *FlagSet) FlagRecursive(val any, names, usage string) *flagset.Flag {
 
 func ApplyRecursiveFlags(dstFS, srcFS *FlagSet) {
 	for _, recFlag := range srcFS.recFlags {
-		flag := dstFS.Flag(recFlag.val, recFlag.names, recFlag.usage)
-		flag.TypeHint = recFlag.flag.TypeHint
-		flag.DefaultHint = recFlag.flag.DefaultHint
+		flag := dstFS.Flag(recFlag.val, recFlag.names, recFlag.desc)
+		flag.TypeName = recFlag.flag.TypeName
+		flag.DefaultText = recFlag.flag.DefaultText
 
 		for k, v := range recFlag.meta {
 			flag.Meta[k] = v

@@ -2,6 +2,10 @@ package clic
 
 import (
 	"fmt"
+
+	"github.com/daved/clic/clicerrs"
+	"github.com/daved/operandset"
+	"github.com/daved/operandset/oserrs"
 )
 
 type Error struct {
@@ -24,3 +28,10 @@ func (e *Error) Unwrap() error {
 func (e *Error) Clic() *Clic {
 	return e.c
 }
+
+var (
+	CauseParseInFlagSet   = &clicerrs.FlagSetError{}
+	CauseOperandSet       = &operandset.Error{}
+	CauseOperandMissing   = &oserrs.OperandMissingError{}
+	CauseParseSubRequired = &clicerrs.SubRequiredError{}
+)

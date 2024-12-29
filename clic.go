@@ -13,7 +13,7 @@ import (
 
 	errs "github.com/daved/clic/clicerrs"
 	"github.com/daved/clic/flagset"
-	"github.com/daved/clic/operandset"
+	"github.com/daved/operandset"
 )
 
 // TODO: consider adding default arg value in tmpl
@@ -57,7 +57,7 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 	c := &Clic{
 		Handler:    h,
 		FlagSet:    flagset.New(name),
-		OperandSet: operandset.New(),
+		OperandSet: operandset.New(name),
 		Subs:       subs,
 		UsageConfig: &UsageConfig{
 			TmplText: tmplText,
@@ -75,13 +75,6 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
 	return New(f, name, subs...)
 }
-
-var (
-	CauseParseInFlagSet      = &errs.FlagSetError{}
-	CauseParseInOperandSet   = &errs.OperandSetError{}
-	CauseParseOperandMissing = &errs.OperandMissingError{}
-	CauseParseSubRequired    = &errs.SubRequiredError{}
-)
 
 // Parse receives command line interface arguments. Parse should be run before
 // Called or Handle so that *Clic can know which handler the user requires.
