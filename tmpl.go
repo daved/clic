@@ -32,13 +32,19 @@ func NewDefaultTmplConfig() *TmplConfig {
 
 	subsAndOperandsHintFn := func(cmd *Clic) string {
 		var out, sep string
+		var anySubShowing bool
 
 		for _, sub := range cmd.subs {
+			if sub.HideUsage {
+				continue
+			}
+			anySubShowing = true
+
 			out += sep + sub.FlagSet.Name()
 			sep = "|"
 		}
 
-		if len(cmd.subs) > 0 {
+		if anySubShowing {
 			pre, suf := "[", "]"
 			if cmd.SubRequired {
 				pre, suf = "{", "}"
@@ -63,7 +69,7 @@ func NewDefaultTmplConfig() *TmplConfig {
 		}
 
 		pre, suf := "{", "}"
-		if len(cmd.subs) == 0 {
+		if !anySubShowing {
 			pre, suf = "", ""
 		}
 		return " " + pre + out + suf
