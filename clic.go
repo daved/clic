@@ -4,12 +4,9 @@
 package clic
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"slices"
-	"text/template"
 
 	"github.com/daved/clic/cerrs"
 	"github.com/daved/clic/flagset"
@@ -33,12 +30,6 @@ func (f HandlerFunc) HandleCommand(ctx context.Context) error {
 	return f(ctx)
 }
 
-type UsageConfig struct {
-	Skip     bool
-	TmplText string
-	CmdDesc  string
-}
-
 type Links struct {
 	self   *Clic
 	parent *Clic
@@ -49,21 +40,17 @@ type Links struct {
 type Clic struct {
 	Links
 
-	// TODO: If it can be updated, expose its field
-	// If it needs behavior on setting, expose as setter method
-	// TODO: If it should be retrievable for templating and is
-	// not exposed as a field, expose getter method
-	handler     Handler
-	FlagSet     *flagset.FlagSet
-	OperandSet  *operandset.OperandSet
-	called      bool
+	handler    Handler
+	FlagSet    *flagset.FlagSet
+	OperandSet *operandset.OperandSet
+	called     bool
+
+	tmplCfg     *TmplConfig
 	SubRequired bool
-	UsageConfig *UsageConfig // TODO: Add Description,HideHint fields / drop UsageConfig
-	// TODO: Add templating setter
-	Meta map[string]any
+	Description string
+	HideUsage   bool
+	Meta        map[string]any
 	// TODO: Consider renaming Handle(ctx) err to Run or Execute or ?
-	// TODO: Consider adding a field of type "Add" which has methods Flag, Operand, FlagRec
-	// TODO: Consider renaming "Called"
 }
 
 // New returns a pointer to a newly constructed instance of a Clic.
@@ -72,10 +59,8 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 		handler:    h,
 		FlagSet:    flagset.New(name),
 		OperandSet: operandset.New(name),
-		UsageConfig: &UsageConfig{
-			TmplText: tmplText,
-		},
-		Meta: make(map[string]any),
+		tmplCfg:    NewDefaultTmplConfig(),
+		Meta:       make(map[string]any),
 	}
 
 	c.Links = Links{
@@ -137,27 +122,11 @@ func (c *Clic) Handle(ctx context.Context) error {
 }
 
 func (c *Clic) Usage() string {
-	data := &tmplData{
+	data := &TmplData{
 		CurrentCmd: c,
 		CalledCmds: allCalled(c),
 	}
-
-	tmpl := template.New("clic")
-
-	buf := &bytes.Buffer{}
-
-	tmpl, err := tmpl.Parse(c.UsageConfig.TmplText)
-	if err != nil {
-		fmt.Fprintf(buf, "cli command: template error: %v\n", err)
-		return buf.String()
-	}
-
-	if err := tmpl.Execute(buf, data); err != nil {
-		fmt.Fprintf(buf, "cli command: template error: %v\n", err)
-		return buf.String()
-	}
-
-	return buf.String()
+	return executeTmpl(c.tmplCfg, data)
 }
 
 func (c *Clic) Flag(val any, names, usage string) *flagset.Flag {
@@ -170,6 +139,10 @@ func (c *Clic) FlagRecursive(val any, names, usage string) *flagset.Flag {
 
 func (c *Clic) Operand(val any, req bool, name, desc string) *operandset.Operand {
 	return c.OperandSet.Operand(val, req, name, desc)
+}
+
+func (c *Clic) SetUsageTemplating(tmplCfg *TmplConfig) {
+	c.tmplCfg = tmplCfg
 }
 
 var errParseNoMatch = errors.New("parse: no command match")

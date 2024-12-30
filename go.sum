@@ -5,3 +5,5 @@ github.com/daved/flagset v0.0.0-20241229054433-c9f3aca27668/go.mod h1:PKdNYDQo5T
 github.com/daved/operandset v0.0.0-20241229050511-1b3228071512/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=
 github.com/daved/operandset v0.0.0-20241229052045-3a43feb4049c h1:mSwUcT9IgPj12nx/mhQhj0KaSJHVUeW9RPSiYMfT2vw=
 github.com/daved/operandset v0.0.0-20241229052045-3a43feb4049c/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=
+github.com/daved/operandset v0.0.0-20241230005552-8334c3e75c6d h1:6uhtunLqEmmY5bvDV/k/vakM50XbGW1Y55KtsoiLXJM=
+github.com/daved/operandset v0.0.0-20241230005552-8334c3e75c6d/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=

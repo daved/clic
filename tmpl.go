@@ -1,36 +1,113 @@
 package clic
 
 import (
+	"bytes"
+	"fmt"
 	"strings"
+	"text/template"
 )
 
-type tmplData struct {
+type TmplData struct {
 	CurrentCmd *Clic
 	CalledCmds []*Clic
 }
 
-var tmplText = strings.TrimSpace(`
+type TmplConfig struct {
+	Text string
+	FMap template.FuncMap
+}
+
+func NewDefaultTmplConfig() *TmplConfig {
+	calledCmdsHintFn := func(cmds []*Clic) string {
+		var out, sep string
+		for _, cmd := range cmds {
+			out += sep + cmd.FlagSet.Name()
+			sep = " "
+			if len(cmd.FlagSet.Flags()) > 0 {
+				out += sep + "[FLAGS]"
+			}
+		}
+		return out
+	}
+
+	subsAndOperandsHintFn := func(cmd *Clic) string {
+		var out, sep string
+
+		for _, sub := range cmd.subs {
+			out += sep + sub.FlagSet.Name()
+			sep = "|"
+		}
+		pre, suf := "[", "]"
+		if cmd.SubRequired {
+			pre, suf = "{", "}"
+		}
+		out = pre + out + suf
+
+		if len(cmd.OperandSet.Operands()) == 0 {
+			return " " + out
+		}
+
+		out += " | "
+		sep = ""
+
+		for _, op := range cmd.OperandSet.Operands() {
+			pre, suf := "[", "]"
+			if op.Required() {
+				pre, suf = "<", ">"
+			}
+			out += sep + pre + op.Name() + suf
+			sep = " "
+		}
+
+		pre, suf = "{", "}"
+		if len(cmd.subs) == 0 {
+			pre, suf = "", ""
+		}
+		return " " + pre + out + suf
+	}
+
+	tmplFMap := template.FuncMap{
+		"CalledCmdsHint":      calledCmdsHintFn,
+		"SubsAndOperandsHint": subsAndOperandsHintFn,
+	}
+
+	tmplText := strings.TrimSpace(`
 {{- $cmd := .CurrentCmd -}}
-{{- $leftBrack := "[" -}}{{- $rightBrack := "]" -}}
 Usage:
 
-{{if .}}  {{end}}{{range $cmdIter := .CalledCmds}}
-  {{- $cmdIter.FlagSet.Name}} {{if $cmdIter.FlagSet.Flags}}[FLAGS] {{end -}}
-{{- end}}{{/* range .CalledCmd */}}
-    {{- if $cmd.SubRequired}}{{$leftBrack = "{"}}{{$rightBrack = "}"}}{{end -}}
-    {{- if $cmd.SubCmds}}{{$leftBrack}}{{end}}{{range $i, $subCmd := $cmd.SubCmds}}
-      {{- if $subCmd.UsageConfig.Skip}}{{continue}}{{end}}
-      {{- if $i}}|{{end}}{{$subCmd.FlagSet.Name}}
-    {{- end}}{{/* range sub */}}
-    {{- if and $cmd.SubCmds $cmd.OperandSet.Operands}}|{{end}}
-    {{- range $i, $op := $cmd.OperandSet.Operands}}{{if $i}} {{end}}{{$op.Tag}}{{end}}
-    {{- if $cmd.SubCmds}}{{$rightBrack}}{{end}}
-    {{- if $cmd.UsageConfig.CmdDesc}}
+{{if .}}  {{end}}{{CalledCmdsHint .CalledCmds}}
+{{- SubsAndOperandsHint $cmd}}
+    {{- if $cmd.Description}}
 
-      {{$cmd.UsageConfig.CmdDesc}}
+      {{$cmd.Description}}
     {{- end}}{{/* CmdDesc */}}
 {{if $cmd.OperandSet.Operands}}
 {{$cmd.OperandSet.Usage}}{{- end}}
 {{- if $cmd.FlagSet.Flags}}
 {{$cmd.FlagSet.Usage}}{{- end}}
 `)
+
+	return &TmplConfig{
+		Text: tmplText,
+		FMap: tmplFMap,
+	}
+}
+
+func executeTmpl(tc *TmplConfig, data any) string {
+	tmpl := template.New("clic").Funcs(tc.FMap)
+
+	buf := &bytes.Buffer{}
+
+	tmpl, err := tmpl.Parse(tc.Text)
+	if err != nil {
+		fmt.Fprintf(buf, "%v\n", err)
+		return buf.String()
+	}
+
+	if err := tmpl.Execute(buf, data); err != nil {
+		fmt.Fprintf(buf, "%v\n", err)
+		return buf.String()
+	}
+
+	return buf.String()
+}
