@@ -7,3 +7,5 @@ github.com/daved/operandset v0.0.0-20241229052045-3a43feb4049c h1:mSwUcT9IgPj12n
 github.com/daved/operandset v0.0.0-20241229052045-3a43feb4049c/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=
 github.com/daved/operandset v0.0.0-20241230005552-8334c3e75c6d h1:6uhtunLqEmmY5bvDV/k/vakM50XbGW1Y55KtsoiLXJM=
 github.com/daved/operandset v0.0.0-20241230005552-8334c3e75c6d/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=
+github.com/daved/operandset v0.0.0-20241230013859-ad529f65c3a7 h1:WfM47epJy2L1jf+TFTh/zXG8C0jFj9fs1UtPpfIRnCs=
+github.com/daved/operandset v0.0.0-20241230013859-ad529f65c3a7/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=
