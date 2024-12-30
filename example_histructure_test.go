@@ -96,7 +96,7 @@ func Example_hiStructure() {
 		log.Fatalln(err)
 	}
 
-	if err := cmd.Handle(context.Background()); err != nil {
+	if err := cmd.HandleResolvedCmd(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 

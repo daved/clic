@@ -63,7 +63,7 @@ func Example_loStructure() {
 		log.Fatalln(err)
 	}
 
-	if err := rootClic.Handle(context.Background()); err != nil {
+	if err := rootClic.HandleResolvedCmd(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 

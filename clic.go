@@ -98,8 +98,8 @@ func (c *Clic) Parse(args []string) error {
 	return nil
 }
 
-// CalledCmd returns the command that was selected during Parse processing.
-func (l Links) CalledCmd() *Clic {
+// ResolvedCmd returns the command that was selected during Parse processing.
+func (l Links) ResolvedCmd() *Clic {
 	return lastCalled(l.self)
 }
 
@@ -111,20 +111,20 @@ func (l Links) ParentCmd() *Clic {
 	return l.parent
 }
 
-// Handle runs the Handler of the command that was selected during Parse
+// HandleResolvedCmd runs the Handler of the command that was selected during Parse
 // processing.
-func (c *Clic) Handle(ctx context.Context) error {
+func (c *Clic) HandleResolvedCmd(ctx context.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	return c.CalledCmd().handler.HandleCommand(ctx)
+	return c.ResolvedCmd().handler.HandleCommand(ctx)
 }
 
 func (c *Clic) Usage() string {
 	data := &TmplData{
-		CurrentCmd: c,
-		CalledCmds: allCalled(c),
+		ResolvedCmd:    c,
+		ResolvedCmdSet: resolvedCmdSet(c),
 	}
 	return executeTmpl(c.tmplCfg, data)
 }
@@ -198,7 +198,7 @@ func lastCalled(c *Clic) *Clic {
 	return c
 }
 
-func allCalled(c *Clic) []*Clic {
+func resolvedCmdSet(c *Clic) []*Clic {
 	all := []*Clic{c}
 
 	for c.parent != nil {

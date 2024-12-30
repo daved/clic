@@ -8,8 +8,8 @@ import (
 )
 
 type TmplData struct {
-	CurrentCmd *Clic
-	CalledCmds []*Clic
+	ResolvedCmd    *Clic
+	ResolvedCmdSet []*Clic
 }
 
 type TmplConfig struct {
@@ -18,7 +18,7 @@ type TmplConfig struct {
 }
 
 func NewDefaultTmplConfig() *TmplConfig {
-	calledCmdsHintFn := func(cmds []*Clic) string {
+	resolvedCmdSetHintFn := func(cmds []*Clic) string {
 		var out, sep string
 		for _, cmd := range cmds {
 			out += sep + cmd.FlagSet.Name()
@@ -70,20 +70,20 @@ func NewDefaultTmplConfig() *TmplConfig {
 	}
 
 	tmplFMap := template.FuncMap{
-		"CalledCmdsHint":      calledCmdsHintFn,
+		"ResolvedCmdSetHint":  resolvedCmdSetHintFn,
 		"SubsAndOperandsHint": subsAndOperandsHintFn,
 	}
 
 	tmplText := strings.TrimSpace(`
-{{- $cmd := .CurrentCmd -}}
+{{- $cmd := .ResolvedCmd -}}
 Usage:
 
-{{if .}}  {{end}}{{CalledCmdsHint .CalledCmds}}
+{{if .}}  {{end}}{{ResolvedCmdSetHint .ResolvedCmdSet}}
 {{- SubsAndOperandsHint $cmd}}
     {{- if $cmd.Description}}
 
       {{$cmd.Description}}
-    {{- end}}{{/* CmdDesc */}}
+    {{- end}}
 {{if $cmd.FlagSet.Flags}}
 {{$cmd.FlagSet.Usage}}{{- end}}
 `)

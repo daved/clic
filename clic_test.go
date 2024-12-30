@@ -138,7 +138,7 @@ func TestClicParse(t *testing.T) {
 				return
 			}
 
-			_ = c.Handle(context.Background())
+			_ = c.HandleResolvedCmd(context.Background())
 
 			out := buf.String()
 			if out != tc.out {

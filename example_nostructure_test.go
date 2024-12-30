@@ -37,7 +37,7 @@ func Example_noStructure() {
 		log.Fatalln(err)
 	}
 
-	if err := rootClic.Handle(context.Background()); err != nil {
+	if err := rootClic.HandleResolvedCmd(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 
