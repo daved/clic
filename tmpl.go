@@ -5,33 +5,32 @@ import (
 )
 
 type tmplData struct {
-	Current *Clic
-	Called  []*Clic
+	CurrentCmd *Clic
+	CalledCmds []*Clic
 }
 
 var tmplText = strings.TrimSpace(`
-{{- $cur := .Current -}}
+{{- $cmd := .CurrentCmd -}}
 {{- $leftBrack := "[" -}}{{- $rightBrack := "]" -}}
 Usage:
 
-{{if .}}  {{end}}{{range $clic := .Called}}
-  {{- $clic.FlagSet.Name}} {{if $clic.FlagSet.Flags}}[FLAGS] {{end -}}
-  {{- if eq $cur.FlagSet.Name $clic.FlagSet.Name }}
-    {{- if $cur.SubRequired}}{{$leftBrack = "{"}}{{$rightBrack = "}"}}{{end -}}
-    {{- if $cur.Subs}}{{$leftBrack}}{{end}}{{range $i, $sub := $cur.Subs}}
-      {{- if $sub.UsageConfig.Skip}}{{continue}}{{end}}
-      {{- if $i}}|{{end}}{{$sub.FlagSet.Name}}
+{{if .}}  {{end}}{{range $cmdIter := .CalledCmds}}
+  {{- $cmdIter.FlagSet.Name}} {{if $cmdIter.FlagSet.Flags}}[FLAGS] {{end -}}
+{{- end}}{{/* range .CalledCmd */}}
+    {{- if $cmd.SubRequired}}{{$leftBrack = "{"}}{{$rightBrack = "}"}}{{end -}}
+    {{- if $cmd.SubCmds}}{{$leftBrack}}{{end}}{{range $i, $subCmd := $cmd.SubCmds}}
+      {{- if $subCmd.UsageConfig.Skip}}{{continue}}{{end}}
+      {{- if $i}}|{{end}}{{$subCmd.FlagSet.Name}}
     {{- end}}{{/* range sub */}}
-    {{- if and $cur.Subs $cur.OperandSet.Operands}}|{{end}}
-    {{- range $i, $op := $cur.OperandSet.Operands}}{{if $i}} {{end}}{{$op.Tag}}{{end}}
-    {{- if $cur.Subs}}{{$rightBrack}}{{end}}
-    {{- if $clic.UsageConfig.CmdDesc}}
+    {{- if and $cmd.SubCmds $cmd.OperandSet.Operands}}|{{end}}
+    {{- range $i, $op := $cmd.OperandSet.Operands}}{{if $i}} {{end}}{{$op.Tag}}{{end}}
+    {{- if $cmd.SubCmds}}{{$rightBrack}}{{end}}
+    {{- if $cmd.UsageConfig.CmdDesc}}
 
-      {{$clic.UsageConfig.CmdDesc}}
+      {{$cmd.UsageConfig.CmdDesc}}
     {{- end}}{{/* CmdDesc */}}
-  {{- end}}{{/* eq Name Name */}}
-{{- end}}{{/* range clic */}}
-
-{{if .Current.OperandSet.Operands}}{{.Current.OperandSet.Usage}}{{end}}
-{{- if .Current.FlagSet.Flags}}{{.Current.FlagSet.Usage}}{{end}}
+{{if $cmd.OperandSet.Operands}}
+{{$cmd.OperandSet.Usage}}{{- end}}
+{{- if $cmd.FlagSet.Flags}}
+{{$cmd.FlagSet.Usage}}{{- end}}
 `)

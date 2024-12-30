@@ -39,34 +39,52 @@ type UsageConfig struct {
 	CmdDesc  string
 }
 
+type Links struct {
+	self   *Clic
+	parent *Clic
+	subs   []*Clic
+}
+
 // Clic contains a CLI command handler and subcommand handlers.
 type Clic struct {
-	Handler     Handler
+	Links
+
+	// TODO: If it can be updated, expose its field
+	// If it needs behavior on setting, expose as setter method
+	// TODO: If it should be retrievable for templating and is
+	// not exposed as a field, expose getter method
+	handler     Handler
 	FlagSet     *flagset.FlagSet
 	OperandSet  *operandset.OperandSet
-	Subs        []*Clic
-	Parent      *Clic
 	called      bool
 	SubRequired bool
-	UsageConfig *UsageConfig
-	Meta        map[string]any
+	UsageConfig *UsageConfig // TODO: Add Description,HideHint fields / drop UsageConfig
+	// TODO: Add templating setter
+	Meta map[string]any
+	// TODO: Consider renaming Handle(ctx) err to Run or Execute or ?
+	// TODO: Consider adding a field of type "Add" which has methods Flag, Operand, FlagRec
+	// TODO: Consider renaming "Called"
 }
 
 // New returns a pointer to a newly constructed instance of a Clic.
 func New(h Handler, name string, subs ...*Clic) *Clic {
 	c := &Clic{
-		Handler:    h,
+		handler:    h,
 		FlagSet:    flagset.New(name),
 		OperandSet: operandset.New(name),
-		Subs:       subs,
 		UsageConfig: &UsageConfig{
 			TmplText: tmplText,
 		},
 		Meta: make(map[string]any),
 	}
 
-	for _, sub := range c.Subs {
-		sub.Parent = c
+	c.Links = Links{
+		self: c,
+		subs: subs,
+	}
+
+	for _, sub := range c.Links.subs {
+		sub.parent = c
 	}
 
 	return c
@@ -81,7 +99,7 @@ func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
 // Parse is a separate function from Called and Handle so that calling code can
 // express behavior in between parsing and handling.
 func (c *Clic) Parse(args []string) error {
-	applyRecursiveFlags(c.Subs, c.FlagSet)
+	applyRecursiveFlags(c.subs, c.FlagSet)
 
 	if err := parse(c, args, c.FlagSet.FlagSet.Name()); err != nil {
 		return err
@@ -95,9 +113,17 @@ func (c *Clic) Parse(args []string) error {
 	return nil
 }
 
-// Called returns the command that was selected during Parse processing.
-func (c *Clic) Called() *Clic {
-	return lastCalled(c)
+// CalledCmd returns the command that was selected during Parse processing.
+func (l Links) CalledCmd() *Clic {
+	return lastCalled(l.self)
+}
+
+func (l Links) SubCmds() []*Clic {
+	return l.subs
+}
+
+func (l Links) ParentCmd() *Clic {
+	return l.parent
 }
 
 // Handle runs the Handler of the command that was selected during Parse
@@ -107,13 +133,13 @@ func (c *Clic) Handle(ctx context.Context) error {
 		ctx = context.Background()
 	}
 
-	return c.Called().Handler.HandleCommand(ctx)
+	return c.CalledCmd().handler.HandleCommand(ctx)
 }
 
 func (c *Clic) Usage() string {
 	data := &tmplData{
-		Current: c,
-		Called:  allCalled(c),
+		CurrentCmd: c,
+		CalledCmds: allCalled(c),
 	}
 
 	tmpl := template.New("clic")
@@ -172,7 +198,7 @@ func parse(c *Clic, args []string, cmdName string) (err error) {
 	subCmdName := subCmdArgs[0]
 	subCmdArgs = subCmdArgs[1:]
 
-	for _, sub := range c.Subs {
+	for _, sub := range c.Links.subs {
 		if err := parse(sub, subCmdArgs, subCmdName); err != nil {
 			if errors.Is(err, errParseNoMatch) {
 				continue
@@ -190,7 +216,7 @@ func parse(c *Clic, args []string, cmdName string) (err error) {
 }
 
 func lastCalled(c *Clic) *Clic {
-	for _, sub := range c.Subs {
+	for _, sub := range c.Links.subs {
 		if sub.called {
 			return lastCalled(sub)
 		}
@@ -202,8 +228,8 @@ func lastCalled(c *Clic) *Clic {
 func allCalled(c *Clic) []*Clic {
 	all := []*Clic{c}
 
-	for c.Parent != nil {
-		c = c.Parent
+	for c.parent != nil {
+		c = c.parent
 		all = append(all, c)
 	}
 
@@ -215,7 +241,7 @@ func allCalled(c *Clic) []*Clic {
 func applyRecursiveFlags(subs []*Clic, src *flagset.FlagSet) {
 	for _, sub := range subs {
 		flagset.ApplyRecursiveFlags(sub.FlagSet, src)
-		applyRecursiveFlags(sub.Subs, src)
-		applyRecursiveFlags(sub.Subs, sub.FlagSet)
+		applyRecursiveFlags(sub.Links.subs, src)
+		applyRecursiveFlags(sub.Links.subs, sub.FlagSet)
 	}
 }
