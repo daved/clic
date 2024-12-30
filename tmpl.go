@@ -37,18 +37,21 @@ func NewDefaultTmplConfig() *TmplConfig {
 			out += sep + sub.FlagSet.Name()
 			sep = "|"
 		}
-		pre, suf := "[", "]"
-		if cmd.SubRequired {
-			pre, suf = "{", "}"
-		}
-		out = pre + out + suf
 
-		if len(cmd.OperandSet.Operands()) == 0 {
-			return " " + out
-		}
+		if len(cmd.subs) > 0 {
+			pre, suf := "[", "]"
+			if cmd.SubRequired {
+				pre, suf = "{", "}"
+			}
+			out = pre + out + suf
 
-		out += " | "
-		sep = ""
+			if len(cmd.OperandSet.Operands()) == 0 {
+				return " " + out
+			}
+
+			out += " | "
+			sep = ""
+		}
 
 		for _, op := range cmd.OperandSet.Operands() {
 			pre, suf := "[", "]"
@@ -59,7 +62,7 @@ func NewDefaultTmplConfig() *TmplConfig {
 			sep = " "
 		}
 
-		pre, suf = "{", "}"
+		pre, suf := "{", "}"
 		if len(cmd.subs) == 0 {
 			pre, suf = "", ""
 		}
@@ -81,9 +84,7 @@ Usage:
 
       {{$cmd.Description}}
     {{- end}}{{/* CmdDesc */}}
-{{if $cmd.OperandSet.Operands}}
-{{$cmd.OperandSet.Usage}}{{- end}}
-{{- if $cmd.FlagSet.Flags}}
+{{if $cmd.FlagSet.Flags}}
 {{$cmd.FlagSet.Usage}}{{- end}}
 `)
 
