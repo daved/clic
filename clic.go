@@ -10,7 +10,7 @@ import (
 
 	"github.com/daved/clic/cerrs"
 	"github.com/daved/clic/flagset"
-	"github.com/daved/operandset"
+	"github.com/daved/clic/operandset"
 )
 
 // Handler describes types that can be used to handle CLI command requests. Due

@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/daved/operandset"
+	"github.com/daved/clic/operandset"
 )
 
 func defaultPtrs[T any](args ...T) []any {
