@@ -13,10 +13,6 @@ import (
 	"github.com/daved/operandset"
 )
 
-// TODO: consider adding default arg value in tmpl
-// TODO: consider adding descriptions of available subcmds to tmpl, optionally skippable
-// TODO: consider what subcmd grouping and sorting looks like
-
 // Handler describes types that can be used to handle CLI command requests. Due
 // to the nature of CLI commands containing both arguments and flags, a handler
 // must expose both a FlagSet along with a HandleCommand function.
@@ -50,7 +46,6 @@ type Clic struct {
 	Description string
 	HideUsage   bool
 	Meta        map[string]any
-	// TODO: Consider renaming Handle(ctx) err to Run or Execute or ?
 }
 
 // New returns a pointer to a newly constructed instance of a Clic.
