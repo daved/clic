@@ -5,9 +5,7 @@ import (
 
 	"github.com/daved/clic/cerrs"
 	"github.com/daved/flagset"
-	"github.com/daved/flagset/fserrs"
 	"github.com/daved/operandset"
-	"github.com/daved/operandset/oserrs"
 )
 
 type Error struct {
@@ -31,15 +29,20 @@ func (e *Error) Clic() *Clic {
 	return e.c
 }
 
+type (
+	ParseError       = cerrs.ParseError
+	SubRequiredError = cerrs.SubRequiredError
+)
+
 var (
-	CauseParse       = &cerrs.ParseError{}
-	CauseSubRequired = &cerrs.SubRequiredError{}
+	CauseParse       = &ParseError{}
+	CauseSubRequired = &SubRequiredError{}
 
 	CauseFlagSet      = &flagset.Error{}
-	CauseParseFlagSet = &fserrs.ParseError{}
+	CauseParseFlagSet = &flagset.ParseError{}
 
 	CauseOperandSet        = &operandset.Error{}
-	CauseParseOperand      = &oserrs.ParseError{}
-	CauseOperandMissing    = &oserrs.OperandMissingError{}
-	CauseConvertRawOperand = &oserrs.ConvertRawError{}
+	CauseParseOperand      = &operandset.ParseError{}
+	CauseOperandMissing    = &operandset.OperandMissingError{}
+	CauseConvertRawOperand = &operandset.ConvertRawError{}
 )
