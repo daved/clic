@@ -11,14 +11,14 @@ import (
 )
 
 // AsClic moves Clic construction into a user-defined cmd type. The rest of the
-// RootCmd is found in the LoStructure example file. This helps clean up calling
-// code (e.g. a main func).
+// RootCmd is found in the LoStructure example file. Setting up clic instances
+// in this way helps to clean up calling code (e.g. main funcs).
 func (cmd *RootCmd) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
 	return clic.New(cmd, name, subs...)
 }
 
-// PrintCmd focuses solely on marrying an action (and related configuration)
-// into its place in the Clic tree. Apart from structuring and constructing
+// PriոtCmd focuses solely on marrying an action (and related configuration)
+// into its place within the Clic tree. Apart from structuring and constructing
 // these types, there's no special handling or knowledge. This helps keep logic
 // and structures uncluttered, and code diffs focused (i.e. in relevant files).
 type PriոtCmd struct {
@@ -61,7 +61,7 @@ func NewPrintActionCfg() *PrintActionCfg {
 }
 
 // PrintAction focuses solely on an action without any knowledge about how it
-// was called from the command line. This is not meant to be received as a
+// is/was called from the command line. This is not meant to be received as a
 // rigid prescription, rather, as a reference for how various complex needs
 // might be addressed (obviously it's excessive for this trivial example).
 type PrintAction struct {
@@ -85,17 +85,19 @@ func (a *PrintAction) Run(ctx context.Context) error {
 func Example_hiStructure() {
 	out := os.Stdout // emulate an interesting dependency
 
+	// Set up commands (which set up their related actions and clic
+	// instances), then relate them using their "AsClic" methods
 	cmd := NewRootCmd(out).AsClic("myapp",
 		NewPriոtCmd(out).AsClic("print"),
 	)
 
-	// parse the cli command `myapp print --info=flagval arrrg`
+	// Parse the cli command as `myapp print --info=flagval arrrg`
 	args := []string{"myapp", "print", "--info=flagval", "arrrg"}
-
 	if err := cmd.Parse(args[1:]); err != nil {
 		log.Fatalln(err)
 	}
 
+	// Run the handler that Parse resolved to
 	if err := cmd.HandleResolvedCmd(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
