@@ -26,12 +26,6 @@ func (f HandlerFunc) HandleCommand(ctx context.Context) error {
 	return f(ctx)
 }
 
-type Links struct {
-	self   *Clic
-	parent *Clic
-	subs   []*Clic
-}
-
 // Clic contains a CLI command handler and subcommand handlers.
 type Clic struct {
 	Links
@@ -91,19 +85,6 @@ func (c *Clic) Parse(args []string) error {
 	}
 
 	return nil
-}
-
-// ResolvedCmd returns the command that was selected during Parse processing.
-func (l Links) ResolvedCmd() *Clic {
-	return lastCalled(l.self)
-}
-
-func (l Links) SubCmds() []*Clic {
-	return l.subs
-}
-
-func (l Links) ParentCmd() *Clic {
-	return l.parent
 }
 
 // HandleResolvedCmd runs the Handler of the command that was selected during Parse
