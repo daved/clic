@@ -67,7 +67,7 @@ func NewDefaultTmplConfig() *TmplConfig {
 
 		for _, op := range cmd.OperandSet.Operands() {
 			pre, suf := "[", "]"
-			if op.Required() {
+			if op.IsRequired() {
 				pre, suf = "<", ">"
 			}
 			out += sep + pre + op.Name() + suf
