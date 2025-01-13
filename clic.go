@@ -1,6 +1,6 @@
 // Package clic provides a structured multiplexer for CLI commands. In other
-// words, clic will parse a CLI command and route callers to the appropriate
-// handler.
+// words, clic will parse CLI command arguments and route callers to the
+// appropriate handler. Flags and operands can be set up easily.
 package clic
 
 import (
@@ -13,20 +13,21 @@ import (
 	"github.com/daved/clic/operandset"
 )
 
-// Handler describes types that can be used to handle CLI command requests. Due
-// to the nature of CLI commands containing both arguments and flags, a handler
-// must expose both a FlagSet along with a HandleCommand function.
+// Handler describes types that can be used to handle CLI command requests.
 type Handler interface {
 	HandleCommand(context.Context) error
 }
 
+// HandlerFunc can be used to easily convert a compatible function to a Handler
+// implementation.
 type HandlerFunc func(context.Context) error
 
+// HandleCommand implements Handler.
 func (f HandlerFunc) HandleCommand(ctx context.Context) error {
 	return f(ctx)
 }
 
-// Clic contains a CLI command handler and subcommand handlers.
+// Clic manages a CLI command handler and related information.
 type Clic struct {
 	Links
 
@@ -42,7 +43,7 @@ type Clic struct {
 	Meta        map[string]any
 }
 
-// New returns a pointer to a newly constructed instance of a Clic.
+// New returns an instance of Clic.
 func New(h Handler, name string, subs ...*Clic) *Clic {
 	c := &Clic{
 		handler:    h,
@@ -64,14 +65,16 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 	return c
 }
 
+// NewFromFunc returns an instance of Clic. Any function that is compatible with
+// [HandlerFunc] will be converted automatically and used as the [Handler].
 func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
 	return New(f, name, subs...)
 }
 
-// Parse receives command line interface arguments. Parse should be run before
-// Called or Handle so that *Clic can know which handler the user requires.
-// Parse is a separate function from Called and Handle so that calling code can
-// express behavior in between parsing and handling.
+// Parse receives command line interface arguments, and should be run before
+// HandleResolvedCmd or Link fields are used. Parse is intended to be its own
+// step when using Clic so that calling code can express behavior in between
+// parsing and handling.
 func (c *Clic) Parse(args []string) error {
 	applyRecursiveFlags(c.subs, c.FlagSet)
 
@@ -87,8 +90,8 @@ func (c *Clic) Parse(args []string) error {
 	return nil
 }
 
-// HandleResolvedCmd runs the Handler of the command that was selected during Parse
-// processing.
+// HandleResolvedCmd runs the Handler of the command that was selected during
+// Parse processing.
 func (c *Clic) HandleResolvedCmd(ctx context.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
@@ -97,28 +100,42 @@ func (c *Clic) HandleResolvedCmd(ctx context.Context) error {
 	return c.ResolvedCmd().handler.HandleCommand(ctx)
 }
 
+// Flag adds a flag option to the FlagSet. See [flagset.FlagSet.Flag] for
+// details about which value types are supported.
+func (c *Clic) Flag(val any, names, usage string) *flagset.Flag {
+	return c.FlagSet.Flag(val, names, usage)
+}
+
+// FlagRecursive adds a flag option to the FlagSet. Recursive flags are not
+// visible in the FlagSet instances of child Clic instances before Parse is
+// called (i.e. recursive flags are applied to child flagsets in Parse). See
+// [flagset.FlagSet.Flag] for details about which value types are supported.
+func (c *Clic) FlagRecursive(val any, names, usage string) *flagset.Flag {
+	return c.FlagSet.FlagRecursive(val, names, usage)
+}
+
+// Operand adds an Operand option to the OperandSet. See
+// [operandset.OperandSet.Operand] for details about which value types are
+// supported.
+func (c *Clic) Operand(val any, req bool, name, desc string) *operandset.Operand {
+	return c.OperandSet.Operand(val, req, name, desc)
+}
+
+// SetUsageTemplating is used to override the base template text, and provide a
+// custom FuncMap. If a nil FuncMap is provided, no change will be made to the
+// existing value.
+func (c *Clic) SetUsageTemplating(tmplCfg *TmplConfig) {
+	c.tmplCfg = tmplCfg
+}
+
+// Usage returns the executed usage template. The Meta fields of the relevant
+// types can be leveraged to convey detailed info/behavior in a custom template.
 func (c *Clic) Usage() string {
 	data := &TmplData{
 		ResolvedCmd:    c,
 		ResolvedCmdSet: resolvedCmdSet(c),
 	}
 	return executeTmpl(c.tmplCfg, data)
-}
-
-func (c *Clic) Flag(val any, names, usage string) *flagset.Flag {
-	return c.FlagSet.Flag(val, names, usage)
-}
-
-func (c *Clic) FlagRecursive(val any, names, usage string) *flagset.Flag {
-	return c.FlagSet.FlagRecursive(val, names, usage)
-}
-
-func (c *Clic) Operand(val any, req bool, name, desc string) *operandset.Operand {
-	return c.OperandSet.Operand(val, req, name, desc)
-}
-
-func (c *Clic) SetUsageTemplating(tmplCfg *TmplConfig) {
-	c.tmplCfg = tmplCfg
 }
 
 var errParseNoMatch = errors.New("parse: no command match")
