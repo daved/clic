@@ -2,7 +2,11 @@ github.com/daved/flagset v0.0.0-20241229054433-c9f3aca27668 h1:2xfyhYt1mRFFvzp8b
 github.com/daved/flagset v0.0.0-20241229054433-c9f3aca27668/go.mod h1:PKdNYDQo5ThKGBMAdNwoyRElFHbg/MKZsw1oPlH99vU=
 github.com/daved/flagset v0.0.0-20250103195400-fec27730b4c6 h1:zxpznPneAeyLMIRZp2qa6Rzd81UsFSo00lLHsQ0Mfq0=
 github.com/daved/flagset v0.0.0-20250103195400-fec27730b4c6/go.mod h1:PKdNYDQo5ThKGBMAdNwoyRElFHbg/MKZsw1oPlH99vU=
+github.com/daved/flagset v0.0.0-20250113062234-28cb478919b1 h1:vH+UlVQu7xGG0SgzymBWddJvAvHOvKqJFmcHgLF4g7s=
+github.com/daved/flagset v0.0.0-20250113062234-28cb478919b1/go.mod h1:PKdNYDQo5ThKGBMAdNwoyRElFHbg/MKZsw1oPlH99vU=
 github.com/daved/operandset v0.0.0-20241230013859-ad529f65c3a7 h1:WfM47epJy2L1jf+TFTh/zXG8C0jFj9fs1UtPpfIRnCs=
 github.com/daved/operandset v0.0.0-20241230013859-ad529f65c3a7/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=
 github.com/daved/operandset v0.0.0-20250104022305-f341197c234d h1:+aHffMu1PvBFH0CXA37jVNFY4qzgdBP4dB37jhVMXkk=
 github.com/daved/operandset v0.0.0-20250104022305-f341197c234d/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=
+github.com/daved/operandset v0.0.0-20250113062205-bbf5310097f6 h1:vl0QD2TmWuNzAO+FKH2xjV+nI1yqFW8P+7L6jZxdGL0=
+github.com/daved/operandset v0.0.0-20250113062205-bbf5310097f6/go.mod h1:Q0m9s2NCX7Jpd13oNsNnxDOtSwUsy5+UdGmIzsVjRBg=
