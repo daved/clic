@@ -9,6 +9,8 @@ import (
 	"github.com/daved/clic"
 )
 
+var args = []string{"myapp", "print", "--info=flagval", "arrrg"}
+
 func Example_noStructure() {
 	var (
 		info  = "default"
@@ -17,30 +19,29 @@ func Example_noStructure() {
 	)
 
 	// Associate HandlerFunc with command name "print"
-	printClic := clic.NewFromFunc(func(ctx context.Context) error {
+	print := clic.NewFromFunc(func(ctx context.Context) error {
 		fmt.Fprintf(out, "info flag = %s\n", info)
 		fmt.Fprintf(out, "value arg = %v\n", value)
 		return nil
 	}, "print")
 
 	// Associate "print" flag and operand variables with relevant names
-	printClic.Flag(&info, "i|info", "Set additional info.")
-	printClic.Operand(&value, true, "first_opnd", "Value to be printed.")
+	print.Flag(&info, "i|info", "Set additional info.")
+	print.Operand(&value, true, "first_opnd", "Value to be printed.")
 
 	// Associate HandlerFunc with application name, adding "print" as a subcommand
-	rootClic := clic.NewFromFunc(func(ctx context.Context) error {
+	root := clic.NewFromFunc(func(ctx context.Context) error {
 		fmt.Fprintln(out, "ouch, hit root")
 		return nil
-	}, "myapp", printClic)
+	}, "myapp", print)
 
 	// Parse the cli command as `myapp print --info=flagval arrrg`
-	args := []string{"myapp", "print", "--info=flagval", "arrrg"}
-	if err := rootClic.Parse(args[1:]); err != nil {
+	if err := root.Parse(args[1:]); err != nil {
 		log.Fatalln(err)
 	}
 
 	// Run the handler that Parse resolved to
-	if err := rootClic.HandleResolvedCmd(context.Background()); err != nil {
+	if err := root.HandleResolvedCmd(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 

@@ -10,76 +10,76 @@ import (
 	"github.com/daved/clic"
 )
 
-// AsClic moves Clic construction into a user-defined cmd type. The rest of the
-// RootCmd is found in the LoStructure example file. Setting up clic instances
-// in this way helps to clean up calling code (e.g. main funcs).
-func (cmd *RootCmd) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
-	return clic.New(cmd, name, subs...)
-}
-
-// PriոtCmd focuses solely on marrying an action (and related configuration)
-// into its place within the Clic tree. Apart from structuring and constructing
-// these types, there's no special handling or knowledge. This helps keep logic
-// and structures uncluttered, and code diffs focused (i.e. in relevant files).
-type PriոtCmd struct {
-	action *PrintAction
-	actCnf *PrintActionCfg
-}
-
-func NewPriոtCmd(out io.Writer) *PriոtCmd {
-	tCnf := NewPrintActionCfg()
-
-	return &PriոtCmd{
-		action: NewPrintAction(out, tCnf),
-		actCnf: tCnf,
-	}
-}
-
-func (cmd *PriոtCmd) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
-	c := clic.New(cmd, name, subs...)
-
-	c.Flag(&cmd.actCnf.Info, "i|info", "Set additional info.")
-	c.Operand(&cmd.actCnf.Value, true, "first_opnd", "Value to be printed.")
-
-	return c
-}
-
-func (cmd *PriոtCmd) HandleCommand(ctx context.Context) error {
-	return cmd.action.Run(ctx)
-}
-
-type PrintActionCfg struct {
+type PrintCfg struct {
 	Info  string
 	Value string
 }
 
-func NewPrintActionCfg() *PrintActionCfg {
-	return &PrintActionCfg{
+func NewPrintCfg() *PrintCfg {
+	return &PrintCfg{
 		Info:  "default",
 		Value: "unset",
 	}
 }
 
-// PrintAction focuses solely on an action without any knowledge about how it
-// is/was called from the command line. This is not meant to be received as a
-// rigid prescription, rather, as a reference for how various complex needs
-// might be addressed (obviously it's excessive for this trivial example).
-type PrintAction struct {
+// Print focuses solely on an action without any knowledge about how it is/was
+// called from the command line. This is not meant to be received as a rigid
+// prescription, rather, as a reference for how various complex needs might be
+// addressed (obviously it's excessive for this trivial example).
+type Print struct {
 	out io.Writer
-	cnf *PrintActionCfg
+	cnf *PrintCfg
 }
 
-func NewPrintAction(out io.Writer, cnf *PrintActionCfg) *PrintAction {
-	return &PrintAction{
+func NewPrint(out io.Writer, cnf *PrintCfg) *Print {
+	return &Print{
 		out: out,
 		cnf: cnf,
 	}
 }
 
-func (a *PrintAction) Run(ctx context.Context) error {
-	fmt.Fprintf(a.out, "info flag = %s\n", a.cnf.Info)
-	fmt.Fprintf(a.out, "value arg = %v\n", a.cnf.Value)
+func (p *Print) Run(ctx context.Context) error {
+	fmt.Fprintf(p.out, "info flag = %s\n", p.cnf.Info)
+	fmt.Fprintf(p.out, "value arg = %v\n", p.cnf.Value)
 	return nil
+}
+
+// PriոtHandle focuses solely on marrying an action (and related configuration)
+// into its place within the Clic tree. Apart from structuring and constructing
+// these types, there's no special handling or knowledge. This helps keep logic
+// and structures uncluttered, and code diffs focused (i.e. in relevant files).
+type PriոtHandle struct {
+	action *Print
+	actCnf *PrintCfg
+}
+
+func NewPriոtHandle(out io.Writer) *PriոtHandle {
+	tCnf := NewPrintCfg()
+
+	return &PriոtHandle{
+		action: NewPrint(out, tCnf),
+		actCnf: tCnf,
+	}
+}
+
+// AsClic moves Clic construction into a user-defined cmd type. Setting up clic
+// instances in this way helps to clean up calling code (e.g. main funcs).
+func (h *PriոtHandle) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
+	c := clic.New(h, name, subs...)
+
+	c.Flag(&h.actCnf.Info, "i|info", "Set additional info.")
+	c.Operand(&h.actCnf.Value, true, "first_opnd", "Value to be printed.")
+
+	return c
+}
+
+func (h *PriոtHandle) HandleCommand(ctx context.Context) error {
+	return h.action.Run(ctx)
+}
+
+// The rest of the RootHandle is found in the LoStructure example file.
+func (h *RootHandle) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
+	return clic.New(h, name, subs...)
 }
 
 func Example_hiStructure() {
@@ -87,18 +87,17 @@ func Example_hiStructure() {
 
 	// Set up commands (which set up their related actions and clic
 	// instances), then relate them using their "AsClic" methods
-	cmd := NewRootCmd(out).AsClic("myapp",
-		NewPriոtCmd(out).AsClic("print"),
+	c := NewRootHandle(out).AsClic("myapp",
+		NewPriոtHandle(out).AsClic("print"),
 	)
 
 	// Parse the cli command as `myapp print --info=flagval arrrg`
-	args := []string{"myapp", "print", "--info=flagval", "arrrg"}
-	if err := cmd.Parse(args[1:]); err != nil {
+	if err := c.Parse(args[1:]); err != nil {
 		log.Fatalln(err)
 	}
 
 	// Run the handler that Parse resolved to
-	if err := cmd.HandleResolvedCmd(context.Background()); err != nil {
+	if err := c.HandleResolvedCmd(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 
