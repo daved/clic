@@ -85,8 +85,7 @@ func (h *RootHandle) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
 func Example_hiStructure() {
 	out := os.Stdout // emulate an interesting dependency
 
-	// Set up commands (which set up their related actions and clic
-	// instances), then relate them using their "AsClic" methods
+	// Set up command handling types, and relate them using "AsClic" methods
 	c := NewRootHandle(out).AsClic("myapp",
 		NewPriոtHandle(out).AsClic("print"),
 	)
