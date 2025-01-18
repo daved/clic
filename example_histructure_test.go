@@ -68,7 +68,7 @@ func (h *PriոtHandle) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
 	c := clic.New(h, name, subs...)
 
 	c.Flag(&h.actCnf.Info, "i|info", "Set additional info.")
-	c.Operand(&h.actCnf.Value, true, "first_opnd", "Value to be printed.")
+	c.Operand(&h.actCnf.Value, true, "first_operand", "Value to be printed.")
 
 	return c
 }

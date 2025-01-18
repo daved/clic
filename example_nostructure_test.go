@@ -27,7 +27,7 @@ func Example_noStructure() {
 
 	// Associate "print" flag and operand variables with relevant names
 	print.Flag(&info, "i|info", "Set additional info.")
-	print.Operand(&value, true, "first_opnd", "Value to be printed.")
+	print.Operand(&value, true, "first_operand", "Value to be printed.")
 
 	// Associate HandlerFunc with application name, adding "print" as a subcommand
 	root := clic.NewFromFunc(func(ctx context.Context) error {

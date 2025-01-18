@@ -78,6 +78,20 @@ Argument kinds and their placements:
 command --flag=flag-value subcommand -f flag-value operand_a operand_b
 ```
 
+### Default Templating
+
+Usage() output from the usage example above:
+```sh
+Usage:
+
+  myapp print [FLAGS] <first_operand>
+
+Flags for print:
+
+    -i, --info  =STRING    default: default
+        Set additional info.
+```
+
 ### Custom Templating
 
 Custom templates and template behaviors (i.e. template function maps) can be set. Custom data can be
