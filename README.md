@@ -34,21 +34,24 @@ func main() {
     )
 
     // Associate HandlerFunc with command name "print"
-    print := clic.NewFromFunc(func(ctx context.Context) error {
-        fmt.Fprintf(out, "info flag = %s\n", info)
-        fmt.Fprintf(out, "value arg = %v\n", value)
-        return nil
-    }, "print")
+    print := clic.NewFromFunc(
+        func(ctx context.Context) error {
+            fmt.Fprintf(out, "info flag = %s\nvalue arg = %v\n", info, value)
+            return nil
+        },
+        "print")
 
     // Associate "print" flag and operand variables with relevant names
     print.Flag(&info, "i|info", "Set additional info.")
-    print.Operand(&value, true, "first_opnd", "Value to be printed.")
+    print.Operand(&value, true, "first_operand", "Value to be printed.")
 
     // Associate HandlerFunc with application name, adding "print" as a subcommand
-    root := clic.NewFromFunc(func(ctx context.Context) error {
-        fmt.Fprintln(out, "ouch, hit root")
-        return nil
-    }, "myapp", print)
+    root := clic.NewFromFunc(
+        func(ctx context.Context) error {
+            fmt.Fprintln(out, "ouch, hit root")
+            return nil
+        },
+        "myapp", print)
 
     // Parse the cli command as `myapp print --info=flagval arrrg`
     if err := root.Parse(args[1:]); err != nil {
@@ -80,7 +83,8 @@ command --flag=flag-value subcommand -f flag-value operand_a operand_b
 
 ### Default Templating
 
-Usage() output from the usage example above:
+`print.Usage()` value from the usage example above:
+
 ```sh
 Usage:
 
