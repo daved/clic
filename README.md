@@ -20,42 +20,13 @@ type Clic
     func (c *Clic) Parse(args []string) error
     func (c *Clic) SetUsageTemplating(tmplCfg *TmplConfig)
     func (c *Clic) Usage() string
-type Error
-    func NewError(err error, c *Clic) *Error
-    func (e *Error) Clic() *Clic
-    func (e *Error) Error() string
-    func (e *Error) Unwrap() error
-type Handler
-type HandlerFunc
-    func (f HandlerFunc) HandleCommand(ctx context.Context) error
-type Links
-    func (l Links) ParentCmd() *Clic
-    func (l Links) ResolvedCmd() *Clic
-    func (l Links) SubCmds() []*Clic
-type ParseError
-type SubRequiredError
-type TmplConfig
-    func NewDefaultTmplConfig() *TmplConfig
-type TmplData
+// see package docs for more
 ```
 
 ### Setup
 
 ```go
-package clic_test
-
-import (
-    "context"
-    "fmt"
-    "log"
-    "os"
-
-    "github.com/daved/clic"
-)
-
-var args = []string{"myapp", "print", "--info=flagval", "arrrg"}
-
-func Example_noStructure() {
+func main() {
     var (
         info  = "default"
         value = "unset"
@@ -88,10 +59,6 @@ func Example_noStructure() {
     if err := root.HandleResolvedCmd(context.Background()); err != nil {
         log.Fatalln(err)
     }
-
-    // Output:
-    // info flag = flagval
-    // value arg = arrrg
 }
 ```
 
