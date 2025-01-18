@@ -27,41 +27,25 @@ type Clic
 
 ```go
 func main() {
+    // error handling omitted to keep example focused
+
     var (
         info  = "default"
         value = "unset"
-        out   = os.Stdout // emulate an interesting dependency
     )
 
-    // Associate HandlerFunc with command name "print"
-    print := clic.NewFromFunc(
-        func(ctx context.Context) error {
-            fmt.Fprintf(out, "info flag = %s\nvalue arg = %v\n", info, value)
-            return nil
-        },
-        "print")
+    // Associate HandlerFunc with command name
+    c := clic.NewFromFunc(printFunc(&info, &value), "myapp")
 
     // Associate "print" flag and operand variables with relevant names
-    print.Flag(&info, "i|info", "Set additional info.")
-    print.Operand(&value, true, "first_operand", "Value to be printed.")
+    c.Flag(&info, "i|info", "Set additional info.")
+    c.Operand(&value, true, "first_operand", "Value to be printed.")
 
-    // Associate HandlerFunc with application name, adding "print" as a subcommand
-    root := clic.NewFromFunc(
-        func(ctx context.Context) error {
-            fmt.Fprintln(out, "ouch, hit root")
-            return nil
-        },
-        "myapp", print)
-
-    // Parse the cli command as `myapp print --info=flagval arrrg`
-    if err := root.Parse(args[1:]); err != nil {
-        log.Fatalln(err)
-    }
+    // Parse the cli command as `myapp --info=flagval arrrg`
+    _ = c.Parse([]string{"--info=flagval", "arrrg"})
 
     // Run the handler that Parse resolved to
-    if err := root.HandleResolvedCmd(context.Background()); err != nil {
-        log.Fatalln(err)
-    }
+    _ = c.HandleResolvedCmd(context.Background())
 }
 ```
 
@@ -83,14 +67,14 @@ command --flag=flag-value subcommand -f flag-value operand_a operand_b
 
 ### Default Templating
 
-`print.Usage()` value from the usage example above:
+`c.Usage()` value from the usage example above:
 
 ```txt
 Usage:
 
-  myapp print [FLAGS] <first_operand>
+  myapp [FLAGS] <first_operand>
 
-Flags for print:
+Flags for myapp:
 
     -i, --info  =STRING    default: default
         Set additional info.
@@ -102,7 +86,7 @@ Custom templates and template behaviors (i.e. template function maps) can be set
 attached to instances of Clic, FlagSet, Flag, OperandSet, and Operand using their Meta fields for
 access from custom templates.
 
-### Easily Maturable
+### Maturable Architecture
 
 [Package docs](https://pkg.go.dev/github.com/daved/clic) contain suggestions for three stages of
 application growth.
