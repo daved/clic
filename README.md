@@ -106,3 +106,8 @@ access from custom templates.
 
 [Package docs](https://pkg.go.dev/github.com/daved/clic) contain suggestions for three stages of
 application growth.
+
+### Dependencies
+
+- [flagset](https://github.com/daved/flagset)
+- [operandset](https://github.com/daved/operandset)
