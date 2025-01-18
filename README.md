@@ -85,7 +85,7 @@ command --flag=flag-value subcommand -f flag-value operand_a operand_b
 
 `print.Usage()` value from the usage example above:
 
-```sh
+```txt
 Usage:
 
   myapp print [FLAGS] <first_operand>
