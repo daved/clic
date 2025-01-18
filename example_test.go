@@ -17,7 +17,7 @@ func Example() {
 	// Associate HandlerFunc with command name
 	c := clic.NewFromFunc(printFunc(&info, &value), "myapp")
 
-	// Associate "print" flag and operand variables with relevant names
+	// Associate flag and operand variables with relevant names
 	c.Flag(&info, "i|info", "Set additional info.")
 	c.Operand(&value, true, "first_operand", "Value to be printed.")
 
