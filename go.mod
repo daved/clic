@@ -1,6 +1,6 @@
 module github.com/daved/clic
 
-go 1.23.2
+go 1.18
 
 require (
 	github.com/daved/flagset v0.0.0-20250203090156-c414ebacde42
