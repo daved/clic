@@ -111,7 +111,7 @@ func TestClicParse(t *testing.T) {
 				"myapp", "--info=flagval",
 				"first", "second",
 			},
-			cause: CauseSubRequired,
+			cause: CauseSubCmdRequired,
 		},
 		{
 			scope: scopeB,
@@ -119,7 +119,7 @@ func TestClicParse(t *testing.T) {
 			args: []string{
 				"myapp",
 			},
-			cause: CauseSubRequired,
+			cause: CauseSubCmdRequired,
 		},
 	}
 

@@ -5,6 +5,26 @@ import (
 	"reflect"
 )
 
+// Error is the package-level error implementation.
+type Error struct {
+	child error
+}
+
+// NewError returns a new instance of Error.
+func NewError(child error) *Error {
+	return &Error{child}
+}
+
+// Error implements the error interface.
+func (e *Error) Error() string {
+	return fmt.Sprintf("cli command: %v", e.child)
+}
+
+// Unwrap implements the [errors] Unwrap anonymous interface.
+func (e *Error) Unwrap() error {
+	return e.child
+}
+
 type ParseError struct {
 	child error
 }
@@ -22,19 +42,5 @@ func (e *ParseError) Unwrap() error {
 }
 
 func (e *ParseError) Is(err error) bool {
-	return reflect.TypeOf(e) == reflect.TypeOf(err)
-}
-
-type SubRequiredError struct{}
-
-func NewSubRequiredError() *SubRequiredError {
-	return &SubRequiredError{}
-}
-
-func (e *SubRequiredError) Error() string {
-	return "subcommand is required and not set"
-}
-
-func (e *SubRequiredError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }

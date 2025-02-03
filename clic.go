@@ -94,13 +94,13 @@ func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
 func (c *Clic) Parse(args []string) error {
 	applyRecursiveFlags(c.subs, c.FlagSet)
 
-	if err := parse(c, args, c.FlagSet.FlagSet.Name()); err != nil {
+	if err := parseFlagSet(c, args, c.FlagSet.FlagSet.Name()); err != nil {
 		return err
 	}
 
 	last := lastCalled(c)
 	if err := last.OperandSet.Parse(last.FlagSet.FlagSet.Operands()); err != nil {
-		return NewError(cerrs.NewParseError(err), last)
+		return cerrs.NewError(cerrs.NewParseError(err))
 	}
 
 	return nil
@@ -156,7 +156,8 @@ func (c *Clic) Usage() string {
 
 var errParseNoMatch = errors.New("parse: no command match")
 
-func parse(c *Clic, args []string, cmdName string) (err error) {
+func parseFlagSet(c *Clic, args []string, cmdName string) (err error) {
+	wrap := cerrs.NewError
 	fs := c.FlagSet.FlagSet
 
 	c.called = cmdName == "" || cmdName == fs.Name()
@@ -165,13 +166,13 @@ func parse(c *Clic, args []string, cmdName string) (err error) {
 	}
 
 	if err := fs.Parse(args); err != nil {
-		return NewError(cerrs.NewParseError(err), c)
+		return wrap(cerrs.NewParseError(err))
 	}
 	subCmdArgs := fs.Operands()
 
 	if len(subCmdArgs) == 0 {
 		if c.SubRequired {
-			return NewError(cerrs.NewParseError(cerrs.NewSubRequiredError()), c)
+			return wrap(cerrs.NewParseError(ErrSubCmdRequired))
 		}
 
 		return nil
@@ -181,7 +182,7 @@ func parse(c *Clic, args []string, cmdName string) (err error) {
 	subCmdArgs = subCmdArgs[1:]
 
 	for _, sub := range c.Links.subs {
-		if err := parse(sub, subCmdArgs, subCmdName); err != nil {
+		if err := parseFlagSet(sub, subCmdArgs, subCmdName); err != nil {
 			if errors.Is(err, errParseNoMatch) {
 				continue
 			}
@@ -191,7 +192,7 @@ func parse(c *Clic, args []string, cmdName string) (err error) {
 	}
 
 	if c.SubRequired {
-		return NewError(cerrs.NewParseError(cerrs.NewSubRequiredError()), c)
+		return wrap(cerrs.NewParseError(ErrSubCmdRequired))
 	}
 
 	return nil
