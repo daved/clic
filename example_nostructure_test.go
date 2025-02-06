@@ -21,7 +21,7 @@ func Example_noStructure() {
 	// Associate HandlerFunc with command name "print"
 	print := clic.NewFromFunc(
 		func(ctx context.Context) error {
-			fmt.Fprintf(out, "info flag = %s\nvalue arg = %v\n", info, value)
+			fmt.Fprintf(out, "info flag = %s\nvalue operand = %v\n", info, value)
 			return nil
 		},
 		"print")
@@ -50,5 +50,5 @@ func Example_noStructure() {
 
 	// Output:
 	// info flag = flagval
-	// value arg = arrrg
+	// value operand = arrrg
 }

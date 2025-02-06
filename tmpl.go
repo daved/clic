@@ -84,6 +84,7 @@ func NewDefaultTmplConfig() *TmplConfig {
 	tmplFMap := template.FuncMap{
 		"ResolvedCmdSetHint":  resolvedCmdSetHintFn,
 		"SubsAndOperandsHint": subsAndOperandsHintFn,
+		"stringsJoin":         strings.Join,
 	}
 
 	tmplText := strings.TrimSpace(`
@@ -98,6 +99,11 @@ Usage:
     {{- end}}
 {{if $cmd.FlagSet.Flags}}
 {{$cmd.FlagSet.Usage}}{{- end}}
+{{- if $cmd.Aliases}}
+Aliases for {{$cmd.FlagSet.Name}}:
+
+      {{stringsJoin $cmd.Aliases ", "}}
+{{- end}}
 `)
 
 	return &TmplConfig{

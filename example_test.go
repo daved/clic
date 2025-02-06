@@ -29,5 +29,26 @@ func Example() {
 
 	// Output:
 	// info flag = flagval
-	// value arg = arrrg
+	// value operand = arrrg
+}
+
+func Example_aliases() {
+	// error handling omitted to keep example focused
+
+	// Associate HandlerFuncs with commands, setting "hello" as subcommand with an alias
+	hc := clic.NewFromFunc(hello, "hello|aliased|h")
+	c := clic.NewFromFunc(print, "myapp", hc)
+
+	// Associate flag variables with relevant names; Technically unused here
+	var debug bool
+	c.Flag(&debug, "d|debug", "Set debug.")
+
+	// Parse the cli command as `myapp -d aliased`
+	_ = c.Parse([]string{"-d", "aliased"})
+
+	// Run the handler that Parse resolved to
+	_ = c.HandleResolvedCmd(context.Background())
+
+	// Output:
+	// Hello, World
 }

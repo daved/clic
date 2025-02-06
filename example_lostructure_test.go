@@ -40,7 +40,7 @@ func NewPrintHandle(out io.Writer) *PrintHandle {
 }
 
 func (s *PrintHandle) HandleCommand(ctx context.Context) error {
-	fmt.Fprintf(s.out, "info flag = %s\nvalue arg = %v\n", s.info, s.value)
+	fmt.Fprintf(s.out, "info flag = %s\nvalue operand = %v\n", s.info, s.value)
 	return nil
 }
 
@@ -70,5 +70,5 @@ func Example_loStructure() {
 
 	// Output:
 	// info flag = flagval
-	// value arg = arrrg
+	// value operand = arrrg
 }

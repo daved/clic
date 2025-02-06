@@ -39,7 +39,7 @@ func NewPrint(out io.Writer, cnf *PrintCfg) *Print {
 }
 
 func (p *Print) Run(ctx context.Context) error {
-	fmt.Fprintf(p.out, "info flag = %s\nvalue arg = %v\n", p.cnf.Info, p.cnf.Value)
+	fmt.Fprintf(p.out, "info flag = %s\nvalue operand = %v\n", p.cnf.Info, p.cnf.Value)
 	return nil
 }
 
@@ -101,5 +101,5 @@ func Example_hiStructure() {
 
 	// Output:
 	// info flag = flagval
-	// value arg = arrrg
+	// value operand = arrrg
 }

@@ -23,6 +23,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 
 	"github.com/daved/clic/cerrs"
 	"github.com/daved/clic/flagset"
@@ -48,6 +49,7 @@ type Clic struct {
 	Links
 
 	handler    Handler
+	Aliases    []string
 	FlagSet    *flagset.FlagSet
 	OperandSet *operandset.OperandSet
 	called     bool
@@ -61,8 +63,12 @@ type Clic struct {
 
 // New returns an instance of Clic.
 func New(h Handler, name string, subs ...*Clic) *Clic {
+	names := strings.Split(name, "|")
+	name = names[0]
+
 	c := &Clic{
 		handler:    h,
+		Aliases:    names[1:],
 		FlagSet:    flagset.New(name),
 		OperandSet: operandset.New(name),
 		tmplCfg:    NewDefaultTmplConfig(),
@@ -94,7 +100,7 @@ func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
 func (c *Clic) Parse(args []string) error {
 	applyRecursiveFlags(c.subs, c.FlagSet)
 
-	if err := parseFlagSet(c, args, c.FlagSet.FlagSet.Name()); err != nil {
+	if err := parseCmdsAndFlags(c, args, c.FlagSet.FlagSet.Name()); err != nil {
 		return err
 	}
 
@@ -156,11 +162,11 @@ func (c *Clic) Usage() string {
 
 var errParseNoMatch = errors.New("parse: no command match")
 
-func parseFlagSet(c *Clic, args []string, cmdName string) (err error) {
+func parseCmdsAndFlags(c *Clic, args []string, cmdName string) (err error) {
 	wrap := cerrs.NewError
 	fs := c.FlagSet.FlagSet
 
-	c.called = cmdName == "" || cmdName == fs.Name()
+	c.called = cmdName == "" || cmdName == fs.Name() || slices.Contains(c.Aliases, cmdName)
 	if !c.called {
 		return errParseNoMatch
 	}
@@ -182,7 +188,7 @@ func parseFlagSet(c *Clic, args []string, cmdName string) (err error) {
 	subCmdArgs = subCmdArgs[1:]
 
 	for _, sub := range c.Links.subs {
-		if err := parseFlagSet(sub, subCmdArgs, subCmdName); err != nil {
+		if err := parseCmdsAndFlags(sub, subCmdArgs, subCmdName); err != nil {
 			if errors.Is(err, errParseNoMatch) {
 				continue
 			}
