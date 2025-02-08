@@ -36,7 +36,7 @@ func Example_aliases() {
 	// error handling omitted to keep example focused
 
 	// Associate HandlerFuncs with commands, setting "hello" as subcommand with an alias
-	hc := clic.NewFromFunc(hello, "hello|aliased|h")
+	hc := clic.NewFromFunc(hello, "hello|aliased")
 	c := clic.NewFromFunc(print, "myapp", hc)
 
 	// Associate flag variables with relevant names; Technically unused here
