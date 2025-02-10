@@ -2,6 +2,7 @@ package clic_test
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/daved/clic"
 )
@@ -51,4 +52,44 @@ func Example_aliases() {
 
 	// Output:
 	// Hello, World
+}
+
+func Example_categories() {
+	// error handling omitted to keep example focused
+
+	// Associate HandlerFuncs with commands, setting cat and desc fields
+	hc1 := clic.NewFromFunc(hello, "hello1")
+	hc1.Category = "Foo"
+	hc1.Description = "Say hello Uno"
+
+	hc2 := clic.NewFromFunc(hello, "hello2")
+	hc2.Category = "Foo"
+	hc2.Description = "Hello hello xoxo"
+
+	hc := clic.NewFromFunc(hello, "hello")
+	hc.Category = "Bar"
+	hc.Description = "Helo 0000 00 000"
+
+	// Control subcommand category order in the parent
+	c := clic.NewFromFunc(print, "myapp", hc1, hc2, hc)
+	c.SubCmdCatsSort = []string{"Foo|Foo-related", "Bar|All things Bar"}
+
+	// Parse the cli command as `myapp`
+	_ = c.Parse([]string{})
+
+	fmt.Println(c.Usage())
+
+	// Output:
+	// Usage:
+	//
+	//   myapp [hello1|hello2|hello]
+	//
+	// Subcommands for myapp:
+	//
+	//   Foo          Foo-related
+	//     hello1         Say hello Uno
+	//     hello2         Hello hello xoxo
+	//
+	//   Bar          All things Bar
+	//     hello          Helo 0000 00 000
 }

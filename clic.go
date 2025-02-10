@@ -49,16 +49,19 @@ type Clic struct {
 	Links
 
 	handler    Handler
+	called     bool
 	Aliases    []string
 	FlagSet    *flagset.FlagSet
 	OperandSet *operandset.OperandSet
-	called     bool
 
-	tmplCfg     *TmplConfig
 	SubRequired bool
 	Description string
 	HideUsage   bool
-	Meta        map[string]any
+
+	Category       string
+	SubCmdCatsSort []string
+
+	Meta map[string]any
 }
 
 // New returns an instance of Clic.
@@ -71,7 +74,6 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 		Aliases:    names[1:],
 		FlagSet:    flagset.New(name),
 		OperandSet: operandset.New(name),
-		tmplCfg:    NewDefaultTmplConfig(),
 		Meta:       make(map[string]any),
 	}
 
@@ -143,21 +145,10 @@ func (c *Clic) Operand(val any, req bool, name, desc string) *operandset.Operand
 	return c.OperandSet.Operand(val, req, name, desc)
 }
 
-// SetUsageTemplating is used to override the base template text, and provide a
-// custom FuncMap. If a nil FuncMap is provided, no change will be made to the
-// existing value.
-func (c *Clic) SetUsageTemplating(tmplCfg *TmplConfig) {
-	c.tmplCfg = tmplCfg
-}
-
 // Usage returns the executed usage template. The Meta fields of the relevant
 // types can be leveraged to convey detailed info/behavior in a custom template.
 func (c *Clic) Usage() string {
-	data := &TmplData{
-		ResolvedCmd:    c,
-		ResolvedCmdSet: resolvedCmdSet(c),
-	}
-	return executeTmpl(c.tmplCfg, data)
+	return NewUsageTmpl(c).String()
 }
 
 var errParseNoMatch = errors.New("parse: no command match")
