@@ -26,8 +26,8 @@ import (
 	"strings"
 
 	"github.com/daved/clic/cerrs"
-	"github.com/daved/clic/flagset"
-	"github.com/daved/clic/operandset"
+	"github.com/daved/flagset"
+	"github.com/daved/operandset"
 )
 
 // Handler describes types that can be used to handle CLI command requests.
@@ -100,14 +100,12 @@ func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
 // step when using Clic so that calling code can express behavior in between
 // parsing and handling.
 func (c *Clic) Parse(args []string) error {
-	applyRecursiveFlags(c.subs, c.FlagSet)
-
-	if err := parseCmdsAndFlags(c, args, c.FlagSet.FlagSet.Name()); err != nil {
+	if err := parseCmdsAndFlags(c, args, c.FlagSet.Name()); err != nil {
 		return err
 	}
 
 	last := lastCalled(c)
-	if err := last.OperandSet.Parse(last.FlagSet.FlagSet.Operands()); err != nil {
+	if err := last.OperandSet.Parse(last.FlagSet.Operands()); err != nil {
 		return cerrs.NewError(cerrs.NewParseError(err))
 	}
 
@@ -130,19 +128,20 @@ func (c *Clic) Flag(val any, names, usage string) *flagset.Flag {
 	return c.FlagSet.Flag(val, names, usage)
 }
 
-// FlagRecursive adds a flag option to the FlagSet. Recursive flags are not
-// visible in the FlagSet instances of child Clic instances before Parse is
-// called (i.e. recursive flags are applied to child flagsets in Parse). See
-// [flagset.FlagSet.Flag] for details about which value types are supported.
-func (c *Clic) FlagRecursive(val any, names, usage string) *flagset.Flag {
-	return c.FlagSet.FlagRecursive(val, names, usage)
-}
-
 // Operand adds an Operand option to the OperandSet. See
 // [operandset.OperandSet.Operand] for details about which value types are
 // supported.
 func (c *Clic) Operand(val any, req bool, name, desc string) *operandset.Operand {
 	return c.OperandSet.Operand(val, req, name, desc)
+}
+
+// Recursively applies the provided function to the current Clic instance, and
+// all its subcommands recursively.
+func (c *Clic) Recursively(fn func(*Clic)) {
+	fn(c)
+	for _, sub := range c.subs {
+		sub.Recursively(fn)
+	}
 }
 
 // Usage returns the executed usage template. The Meta fields of the relevant
@@ -155,17 +154,16 @@ var errParseNoMatch = errors.New("parse: no command match")
 
 func parseCmdsAndFlags(c *Clic, args []string, cmdName string) (err error) {
 	wrap := cerrs.NewError
-	fs := c.FlagSet.FlagSet
 
-	c.called = cmdName == "" || cmdName == fs.Name() || slices.Contains(c.Aliases, cmdName)
+	c.called = cmdName == "" || cmdName == c.FlagSet.Name() || slices.Contains(c.Aliases, cmdName)
 	if !c.called {
 		return errParseNoMatch
 	}
 
-	if err := fs.Parse(args); err != nil {
+	if err := c.FlagSet.Parse(args); err != nil {
 		return wrap(cerrs.NewParseError(err))
 	}
-	subCmdArgs := fs.Operands()
+	subCmdArgs := c.FlagSet.Operands()
 
 	if len(subCmdArgs) == 0 {
 		if c.SubRequired {
@@ -216,12 +214,4 @@ func resolvedCmdSet(c *Clic) []*Clic {
 	slices.Reverse(all)
 
 	return all
-}
-
-func applyRecursiveFlags(subs []*Clic, src *flagset.FlagSet) {
-	for _, sub := range subs {
-		flagset.ApplyRecursiveFlags(sub.FlagSet, src)
-		applyRecursiveFlags(sub.Links.subs, src)
-		applyRecursiveFlags(sub.Links.subs, sub.FlagSet)
-	}
 }

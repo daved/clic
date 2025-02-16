@@ -141,6 +141,10 @@ Subcommands for {{$cmd.FlagSet.Name}}:
 func ensureSubCmdCatsSort(c *Clic) {
 	sort := slices.Clone(c.SubCmdCatsSort)
 	for _, sub := range c.SubCmds() {
+		if c.SubCmdCatsSort == nil && c.Category == "" {
+			continue
+		}
+
 		if !slices.ContainsFunc(sort, func(s string) bool {
 			prefix, _, _ := strings.Cut(s, "|")
 			return prefix == sub.Category
@@ -148,5 +152,8 @@ func ensureSubCmdCatsSort(c *Clic) {
 			sort = append(sort, sub.Category)
 		}
 	}
-	c.SubCmdCatsSort = sort
+
+	if len(sort) > 0 {
+		c.SubCmdCatsSort = sort
+	}
 }
