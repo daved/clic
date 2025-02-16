@@ -6,37 +6,62 @@ import (
 
 	"github.com/daved/flagset"
 	"github.com/daved/operandset"
+	"github.com/daved/vtype"
 )
 
 // ErrSubCmdRequired signals that a subcommand is required and not set.
-var ErrSubCmdRequired = errors.New("subcommand is required and not set")
+var ErrSubCmdRequired = errors.New("subcommand required")
 
 // Cause values are provided for documentation, and to allow callers to easily
 // detect error conditions using a switch/case and [errors.Is]. If error
 // inspection is required, use [errors.As].
 var (
 	CauseSubCmdRequired   = ErrSubCmdRequired
-	CauseFlagHydrate      = &flagset.FlagHydrateError{}
-	CauseFlagUnrecognized = &flagset.FlagUnrecognizedError{}
-	CauseOperandHydrate   = &operandset.OperandHydrateError{}
-	CauseOperandMissing   = &operandset.OperandMissingError{}
+	CauseFlagResolve      = &flagset.ResolveError{}
+	CauseFlagUnrecognized = flagset.ErrFlagUnrecognized
+	CauseOperandResolve   = &operandset.ResolveError{}
+	CauseOperandRequired  = operandset.ErrOperandRequired
+	CauseHydrateError     = &vtype.HydrateError{}
+	CauseTypeUnsupported  = vtype.ErrTypeUnsupported
 )
 
 func UserFriendlyError(err error) error {
 	if errors.Is(err, CauseSubCmdRequired) {
 		return errors.New("A subcommand is required")
 	}
-	if fhErr := (*flagset.FlagHydrateError)(nil); errors.As(err, &fhErr) {
-		return fmt.Errorf("Bad flag value for %q (%v)", fhErr.Name, fhErr.Unwrap())
+
+	if resErr := (*flagset.ResolveError)(nil); errors.As(err, &resErr) {
+		if errors.Is(resErr, flagset.ErrFlagUnrecognized) {
+			return fmt.Errorf("Unrecognized flag %q", resErr.FlagName)
+		}
+		if hydErr := friendlyHydrateError(resErr, "flag"); hydErr != nil {
+			return hydErr
+		}
+		return fmt.Errorf("Cannot process flag %q (%v)", resErr.FlagName, resErr.Unwrap())
 	}
-	if fuErr := (*flagset.FlagUnrecognizedError)(nil); errors.As(err, &fuErr) {
-		return fmt.Errorf("Unrecognized flag %q", fuErr.Name)
+
+	if resErr := (*operandset.ResolveError)(nil); errors.As(err, &resErr) {
+		if errors.Is(resErr, operandset.ErrOperandRequired) {
+			return fmt.Errorf("Operand %q is required", resErr.OperandName)
+		}
+		if hydErr := friendlyHydrateError(resErr, "operand"); hydErr != nil {
+			return hydErr
+		}
+		return fmt.Errorf("Cannot process operand %q (%v)", resErr.OperandName, resErr.Unwrap())
 	}
-	if ohErr := (*operandset.OperandHydrateError)(nil); errors.As(err, &ohErr) {
-		return fmt.Errorf("Bad operand value for %q (%v)", ohErr.Name, ohErr.Unwrap())
-	}
-	if omErr := (*operandset.OperandMissingError)(nil); errors.As(err, &omErr) {
-		return fmt.Errorf("Operand %q is required", omErr.Name)
-	}
+
 	return err
+}
+
+func friendlyHydrateError(err error, typ string) error {
+	if hydErr := (*vtype.HydrateError)(nil); errors.As(err, &hydErr) {
+		if errors.Is(hydErr, vtype.ErrTypeUnsupported) {
+			return fmt.Errorf("Unsupported %s value type '%T'", typ, hydErr.Val)
+		}
+		return fmt.Errorf(
+			"Cannot set %s value of type '%T' (%v)",
+			typ, hydErr.Val, hydErr.Unwrap(),
+		)
+	}
+	return nil
 }

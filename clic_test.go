@@ -82,7 +82,7 @@ func TestClicParse(t *testing.T) {
 			args: []string{
 				"myapp", "subcmd", "--info=flagval",
 			},
-			cause: CauseOperandMissing,
+			cause: CauseOperandRequired,
 		},
 		{
 			scope: scopeA,
