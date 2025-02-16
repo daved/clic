@@ -90,12 +90,13 @@ func Example_hiStructure() {
 	)
 
 	// Parse the cli command as `myapp print --info=flagval arrrg`
-	if err := c.Parse(args[1:]); err != nil {
+	resolved, err := c.Parse(args[1:])
+	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// Run the handler that Parse resolved to
-	if err := c.HandleResolvedCmd(context.Background()); err != nil {
+	if err := resolved.Handle(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 

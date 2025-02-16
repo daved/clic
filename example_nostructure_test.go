@@ -39,12 +39,13 @@ func Example_noStructure() {
 		"myapp", print)
 
 	// Parse the cli command as `myapp print --info=flagval arrrg`
-	if err := root.Parse(args[1:]); err != nil {
+	resolved, err := root.Parse(args[1:])
+	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// Run the handler that Parse resolved to
-	if err := root.HandleResolvedCmd(context.Background()); err != nil {
+	if err := resolved.Handle(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 

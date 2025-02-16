@@ -13,18 +13,18 @@ import (
 // as an example of how to setup custom usage output templating.
 func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 	type tmplData struct {
-		ResolvedCmd    *Clic
-		ResolvedCmdSet []*Clic
+		Cmd    *Clic
+		CmdSet []*Clic
 	}
 
 	data := &tmplData{
-		ResolvedCmd:    c,
-		ResolvedCmdSet: resolvedCmdSet(c),
+		Cmd:    c,
+		CmdSet: cmdSet(c),
 	}
 
 	ensureSubCmdCatsSort(c)
 
-	resolvedCmdSetHintFn := func(cmds []*Clic) string {
+	cmdSetHintFn := func(cmds []*Clic) string {
 		var out, sep string
 		for _, cmd := range cmds {
 			out += sep + cmd.FlagSet.Name()
@@ -98,7 +98,7 @@ func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 	}
 
 	fMap := template.FuncMap{
-		"ResolvedCmdSetHint":  resolvedCmdSetHintFn,
+		"CmdSetHint":          cmdSetHintFn,
 		"SubsAndOperandsHint": subsAndOperandsHintFn,
 		"StringsJoin":         strings.Join,
 		"CategoryLine":        categoryLine,
@@ -107,10 +107,10 @@ func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 	}
 
 	text := strings.TrimSpace(`
-{{- $cmd := .ResolvedCmd -}}
+{{- $cmd := .Cmd -}}
 Usage:
 
-{{if .}}  {{end}}{{ResolvedCmdSetHint .ResolvedCmdSet}}{{SubsAndOperandsHint $cmd}}
+{{if .}}  {{end}}{{CmdSetHint .CmdSet}}{{SubsAndOperandsHint $cmd}}
     {{- if $cmd.Description}}
 
       {{$cmd.Description}}
@@ -138,6 +138,21 @@ Subcommands for {{$cmd.FlagSet.Name}}:
 	return tmpl.New(text, fMap, data)
 }
 
+func cmdSet(c *Clic) []*Clic {
+	all := []*Clic{c}
+
+	for c.parent != nil {
+		c = c.parent
+		all = append(all, c)
+	}
+
+	slices.Reverse(all)
+
+	return all
+}
+
+// todo: swap this for a tmpl func,
+// return relevant values when called instead of updating clic
 func ensureSubCmdCatsSort(c *Clic) {
 	sort := slices.Clone(c.SubCmdCatsSort)
 	for _, sub := range c.SubCmds() {

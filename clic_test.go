@@ -130,7 +130,7 @@ func TestClicParse(t *testing.T) {
 
 			c := tc.scope.clicFn(buf, &ptrs)
 
-			err := c.Parse(tc.args[1:])
+			resolved, err := c.Parse(tc.args[1:])
 			if !errors.Is(err, tc.cause) {
 				t.Fatalf("parse error: got %v, want %v", err, tc.cause)
 			}
@@ -138,7 +138,7 @@ func TestClicParse(t *testing.T) {
 				return
 			}
 
-			_ = c.HandleResolvedCmd(context.Background())
+			_ = resolved.Handle(context.Background())
 
 			out := buf.String()
 			if out != tc.out {

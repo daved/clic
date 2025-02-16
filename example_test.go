@@ -23,10 +23,10 @@ func Example() {
 	c.Operand(&value, true, "first_operand", "Value to be printed.")
 
 	// Parse the cli command as `myapp --info=flagval arrrg`
-	_ = c.Parse([]string{"--info=flagval", "arrrg"})
+	resolved, _ := c.Parse([]string{"--info=flagval", "arrrg"})
 
 	// Run the handler that Parse resolved to
-	_ = c.HandleResolvedCmd(context.Background())
+	_ = resolved.Handle(context.Background())
 
 	// Output:
 	// info flag = flagval
@@ -45,10 +45,10 @@ func Example_aliases() {
 	c.Flag(&debug, "d|debug", "Set debug.")
 
 	// Parse the cli command as `myapp -d aliased`
-	_ = c.Parse([]string{"-d", "aliased"})
+	resolved, _ := c.Parse([]string{"-d", "aliased"})
 
 	// Run the handler that Parse resolved to
-	_ = c.HandleResolvedCmd(context.Background())
+	_ = resolved.Handle(context.Background())
 
 	// Output:
 	// Hello, World
@@ -75,9 +75,9 @@ func Example_categories() {
 	c.SubCmdCatsSort = []string{"Foo|Foo-related", "Bar|All things Bar"}
 
 	// Parse the cli command as `myapp`
-	_ = c.Parse([]string{})
+	resolved, _ := c.Parse([]string{})
 
-	fmt.Println(c.Usage())
+	fmt.Println(resolved.Usage())
 
 	// Output:
 	// Usage:

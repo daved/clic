@@ -49,7 +49,6 @@ type Clic struct {
 	Links
 
 	handler    Handler
-	called     bool
 	Aliases    []string
 	FlagSet    *flagset.FlagSet
 	OperandSet *operandset.OperandSet
@@ -78,11 +77,10 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 	}
 
 	c.Links = Links{
-		self: c,
 		subs: subs,
 	}
 
-	for _, sub := range c.Links.subs {
+	for _, sub := range c.subs {
 		sub.parent = c
 	}
 
@@ -99,27 +97,17 @@ func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic {
 // HandleResolvedCmd or Link fields are used. Parse is intended to be its own
 // step when using Clic so that calling code can express behavior in between
 // parsing and handling.
-func (c *Clic) Parse(args []string) error {
-	if err := parseCmdsAndFlags(c, args, c.FlagSet.Name()); err != nil {
-		return err
+func (c *Clic) Parse(args []string) (*Clic, error) {
+	resolved, err := parseCmdsAndFlags(c, args, c.FlagSet.Name())
+	if err != nil {
+		return resolved, err
 	}
 
-	last := lastCalled(c)
-	if err := last.OperandSet.Parse(last.FlagSet.Operands()); err != nil {
-		return cerrs.NewError(cerrs.NewParseError(err))
+	if err := resolved.OperandSet.Parse(resolved.FlagSet.Operands()); err != nil {
+		return resolved, cerrs.NewError(cerrs.NewParseError(err))
 	}
 
-	return nil
-}
-
-// HandleResolvedCmd runs the Handler of the command that was selected during
-// Parse processing.
-func (c *Clic) HandleResolvedCmd(ctx context.Context) error {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	return c.ResolvedCmd().handler.HandleCommand(ctx)
+	return resolved, nil
 }
 
 // Flag adds a flag option to the FlagSet. See [flagset.FlagSet.Flag] for
@@ -144,6 +132,10 @@ func (c *Clic) Recursively(fn func(*Clic)) {
 	}
 }
 
+func (c *Clic) Handle(ctx context.Context) error {
+	return c.handler.HandleCommand(ctx)
+}
+
 // Usage returns the executed usage template. The Meta fields of the relevant
 // types can be leveraged to convey detailed info/behavior in a custom template.
 func (c *Clic) Usage() string {
@@ -152,66 +144,44 @@ func (c *Clic) Usage() string {
 
 var errParseNoMatch = errors.New("parse: no command match")
 
-func parseCmdsAndFlags(c *Clic, args []string, cmdName string) (err error) {
+func parseCmdsAndFlags(c *Clic, args []string, cmdName string) (*Clic, error) {
 	wrap := cerrs.NewError
 
-	c.called = cmdName == "" || cmdName == c.FlagSet.Name() || slices.Contains(c.Aliases, cmdName)
-	if !c.called {
-		return errParseNoMatch
+	called := cmdName == "" || cmdName == c.FlagSet.Name() || slices.Contains(c.Aliases, cmdName)
+	if !called {
+		return c, errParseNoMatch
 	}
 
 	if err := c.FlagSet.Parse(args); err != nil {
-		return wrap(cerrs.NewParseError(err))
+		return c, wrap(cerrs.NewParseError(err))
 	}
 	subCmdArgs := c.FlagSet.Operands()
 
 	if len(subCmdArgs) == 0 {
 		if c.SubRequired {
-			return wrap(cerrs.NewParseError(ErrSubCmdRequired))
+			return c, wrap(cerrs.NewParseError(ErrSubCmdRequired))
 		}
 
-		return nil
+		return c, nil
 	}
 
 	subCmdName := subCmdArgs[0]
 	subCmdArgs = subCmdArgs[1:]
 
 	for _, sub := range c.Links.subs {
-		if err := parseCmdsAndFlags(sub, subCmdArgs, subCmdName); err != nil {
+		resolved, err := parseCmdsAndFlags(sub, subCmdArgs, subCmdName)
+		if err != nil {
 			if errors.Is(err, errParseNoMatch) {
 				continue
 			}
-			return err
+			return resolved, err
 		}
-		return nil
+		return resolved, nil
 	}
 
 	if c.SubRequired {
-		return wrap(cerrs.NewParseError(ErrSubCmdRequired))
+		return c, wrap(cerrs.NewParseError(ErrSubCmdRequired))
 	}
 
-	return nil
-}
-
-func lastCalled(c *Clic) *Clic {
-	for _, sub := range c.Links.subs {
-		if sub.called {
-			return lastCalled(sub)
-		}
-	}
-
-	return c
-}
-
-func resolvedCmdSet(c *Clic) []*Clic {
-	all := []*Clic{c}
-
-	for c.parent != nil {
-		c = c.parent
-		all = append(all, c)
-	}
-
-	slices.Reverse(all)
-
-	return all
+	return c, nil
 }
