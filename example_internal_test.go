@@ -2,7 +2,9 @@ package clic_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 )
 
 func printFunc(info, value *string) func(context.Context) error {
@@ -24,4 +26,13 @@ func print(ctx context.Context) error {
 func hello(context.Context) error {
 	fmt.Println("Hello, World")
 	return nil
+}
+
+func details(context.Context) error {
+	fmt.Printf("Args: %v\n", os.Args)
+	return nil
+}
+
+func unused(context.Context) error {
+	return errors.New("unused")
 }

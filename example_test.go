@@ -23,73 +23,110 @@ func Example() {
 	c.Operand(&value, true, "first_operand", "Value to be printed.")
 
 	// Parse the cli command as `myapp --info=flagval arrrg`
-	resolved, _ := c.Parse([]string{"--info=flagval", "arrrg"})
+	cmd, _ := c.Parse([]string{"--info=flagval", "arrrg"})
 
 	// Run the handler that Parse resolved to
-	_ = resolved.Handle(context.Background())
+	_ = cmd.Handle(context.Background())
 
+	fmt.Println()
+	fmt.Println(cmd.Usage())
 	// Output:
 	// info flag = flagval
 	// value operand = arrrg
+	//
+	// Usage:
+	//
+	//   myapp [FLAGS] <first_operand>
+	//
+	// Flags for myapp:
+	//
+	//     -i, --info  =STRING    default: default
+	//         Set additional info.
 }
 
 func Example_aliases() {
 	// error handling omitted to keep example focused
 
-	// Associate HandlerFuncs with commands, setting "hello" as subcommand with an alias
-	hc := clic.NewFromFunc(hello, "hello|aliased")
-	c := clic.NewFromFunc(print, "myapp", hc)
+	// Associate HandlerFunc with command name and alias
+	c := clic.NewFromFunc(hello, "hello|aliased")
 
-	// Associate flag variables with relevant names; Technically unused here
-	var debug bool
-	c.Flag(&debug, "d|debug", "Set debug.")
-
-	// Parse the cli command as `myapp -d aliased`
-	resolved, _ := c.Parse([]string{"-d", "aliased"})
+	// Parse the cli command as `myapp aliased`
+	cmd, _ := c.Parse([]string{"aliased"})
 
 	// Run the handler that Parse resolved to
-	_ = resolved.Handle(context.Background())
+	_ = cmd.Handle(context.Background())
 
 	// Output:
 	// Hello, World
 }
 
 func Example_categories() {
-	// error handling omitted to keep example focused
-
-	// Associate HandlerFuncs with commands, setting cat and desc fields
-	hc1 := clic.NewFromFunc(hello, "hello1")
-	hc1.Category = "Foo"
-	hc1.Description = "Say hello Uno"
-
-	hc2 := clic.NewFromFunc(hello, "hello2")
-	hc2.Category = "Foo"
-	hc2.Description = "Hello hello xoxo"
-
+	// Associate HandlerFuncs with command names, setting cat and desc fields
 	hc := clic.NewFromFunc(hello, "hello")
-	hc.Category = "Bar"
-	hc.Description = "Helo 0000 00 000"
+	hc.Category = "Greetings"
+	hc.Description = "Show hello world message"
+
+	pc := clic.NewFromFunc(details, "details")
+	pc.Category = "Informational"
+	pc.Description = "List details (os.Args)"
 
 	// Control subcommand category order in the parent
-	c := clic.NewFromFunc(print, "myapp", hc1, hc2, hc)
-	c.SubCmdCatsSort = []string{"Foo|Foo-related", "Bar|All things Bar"}
+	c := clic.NewFromFunc(unused, "myapp", hc, pc)
+	c.SubRequired = true
+	c.SubCmdCatsSort = []string{"Greetings|Greetings-related", "Informational|All things info"}
 
 	// Parse the cli command as `myapp`
-	resolved, _ := c.Parse([]string{})
-
-	fmt.Println(resolved.Usage())
-
+	cmd, err := c.Parse([]string{})
+	if err != nil {
+		fmt.Println(cmd.Usage())
+		fmt.Println(err)
+	}
 	// Output:
 	// Usage:
 	//
-	//   myapp [hello1|hello2|hello]
+	//   myapp {hello|details}
 	//
 	// Subcommands for myapp:
 	//
-	//   Foo          Foo-related
-	//     hello1         Say hello Uno
-	//     hello2         Hello hello xoxo
+	//   Greetings          Greetings-related
+	//     hello              Show hello world message
 	//
-	//   Bar          All things Bar
-	//     hello          Helo 0000 00 000
+	//   Informational      All things info
+	//     details            List details (os.Args)
+	//
+	// cli command: parse: subcommand required
+}
+
+func Example_verbosity() {
+	// error handling omitted to keep example focused
+
+	var verbosity []bool
+
+	// Associate HandlerFunc with command name
+	c := clic.NewFromFunc(hello, "myapp")
+
+	// Associate flag and operand variables with relevant names
+	c.Flag(&verbosity, "v", "Set verbosity. Can be set multiple times.")
+
+	// Parse the cli command as `myapp -vvv`
+	cmd, _ := c.Parse([]string{"-vvv"})
+
+	// Run the handler that Parse resolved to
+	_ = cmd.Handle(context.Background())
+
+	fmt.Printf("verbosity: length=%d value=%v\n", len(verbosity), verbosity)
+	fmt.Println()
+	fmt.Println(cmd.Usage())
+	// Output:
+	// Hello, World
+	// verbosity: length=3 value=[true true true]
+	//
+	// Usage:
+	//
+	//   myapp [FLAGS]
+	//
+	// Flags for myapp:
+	//
+	//     -v  =BOOL
+	//         Set verbosity. Can be set multiple times.
 }

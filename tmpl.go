@@ -88,7 +88,12 @@ func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 		if !anySubShowing {
 			pre, suf = "", ""
 		}
-		return " " + pre + out + suf
+		out = pre + out + suf
+
+		if out != "" {
+			out = " " + out
+		}
+		return out
 	}
 
 	unhiddenFlagsFn := func(flags []*flagset.Flag) []*flagset.Flag {
@@ -123,7 +128,7 @@ func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 			return ""
 		}
 		name, desc, _ := strings.Cut(s, "|")
-		return fmt.Sprintf("%-12s %s", name, desc)
+		return fmt.Sprintf("%-18s %s", name, desc)
 	}
 
 	subCmdsByCategoryFn := func(subs []*Clic, category string) []*Clic {
@@ -134,7 +139,7 @@ func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 	}
 
 	subCmdLine := func(c *Clic) string {
-		return fmt.Sprintf("%-14s %s", c.FlagSet.Name(), c.Description)
+		return fmt.Sprintf("%-18s %s", c.FlagSet.Name(), c.Description)
 	}
 
 	fMap := template.FuncMap{
