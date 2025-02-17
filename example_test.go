@@ -62,21 +62,26 @@ func Example_aliases() {
 
 func Example_categories() {
 	// Associate HandlerFuncs with command names, setting cat and desc fields
-	hc := clic.NewFromFunc(hello, "hello")
-	hc.Category = "Greetings"
-	hc.Description = "Show hello world message"
+	hello := clic.NewFromFunc(hello, "hello")
+	hello.Category = "Salutations"
+	hello.Description = "Show hello world message"
 
-	pc := clic.NewFromFunc(details, "details")
-	pc.Category = "Informational"
-	pc.Description = "List details (os.Args)"
+	goodbye := clic.NewFromFunc(goodbye, "goodbye")
+	goodbye.Category = "Salutations"
+	goodbye.Description = "Show goodbye message"
 
-	// Control subcommand category order in the parent
-	c := clic.NewFromFunc(unused, "myapp", hc, pc)
-	c.SubRequired = true
-	c.SubCmdCatsSort = []string{"Greetings|Greetings-related", "Informational|All things info"}
+	print := clic.NewFromFunc(details, "details")
+	print.Category = "Informational"
+	print.Description = "List details (os.Args)"
 
-	// Parse the cli command as `myapp`
-	cmd, err := c.Parse([]string{})
+	// Set up subcommand category order in the parent
+	root := clic.NewFromFunc(unused, "myapp", hello, goodbye, print)
+	root.SubRequired = true
+	// Category names seperated from optional descriptions by "|"
+	root.SubCmdCatsSort = []string{"Salutations|Salutations-related", "Informational|All things info"}
+
+	// Parse the cli command as `myapp`; will return error from lack of subcommand
+	cmd, err := root.Parse([]string{})
 	if err != nil {
 		fmt.Println(cmd.Usage())
 		fmt.Println(err)
@@ -84,12 +89,13 @@ func Example_categories() {
 	// Output:
 	// Usage:
 	//
-	//   myapp {hello|details}
+	//   myapp {hello|goodbye|details}
 	//
 	// Subcommands for myapp:
 	//
-	//   Greetings          Greetings-related
+	//   Salutations        Salutations-related
 	//     hello              Show hello world message
+	//     goodbye            Show goodbye message
 	//
 	//   Informational      All things info
 	//     details            List details (os.Args)
@@ -105,7 +111,7 @@ func Example_verbosity() {
 	// Associate HandlerFunc with command name
 	c := clic.NewFromFunc(hello, "myapp")
 
-	// Associate flag and operand variables with relevant names
+	// Associate flag variable with relevant name
 	c.Flag(&verbosity, "v", "Set verbosity. Can be set multiple times.")
 
 	// Parse the cli command as `myapp -vvv`

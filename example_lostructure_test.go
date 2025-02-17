@@ -10,36 +10,36 @@ import (
 	"github.com/daved/clic"
 )
 
-type RootHandle struct {
+type HandleRoot struct {
 	out io.Writer
 }
 
-func NewRootHandle(out io.Writer) *RootHandle {
-	return &RootHandle{
+func NewHandleRoot(out io.Writer) *HandleRoot {
+	return &HandleRoot{
 		out: out,
 	}
 }
 
-func (s *RootHandle) HandleCommand(ctx context.Context) error {
-	fmt.Fprintln(s.out, "ouch, hit root")
+func (s *HandleRoot) HandleCommand(ctx context.Context) error {
+	fmt.Fprintln(s.out, "from root")
 	return nil
 }
 
-type PrintHandle struct {
+type HandlePrint struct {
 	out   io.Writer
 	info  string
 	value string
 }
 
-func NewPrintHandle(out io.Writer) *PrintHandle {
-	return &PrintHandle{
+func NewHandlePrint(out io.Writer) *HandlePrint {
+	return &HandlePrint{
 		out:   out,
 		info:  "default",
 		value: "unset",
 	}
 }
 
-func (s *PrintHandle) HandleCommand(ctx context.Context) error {
+func (s *HandlePrint) HandleCommand(ctx context.Context) error {
 	fmt.Fprintf(s.out, "info flag = %s\nvalue operand = %v\n", s.info, s.value)
 	return nil
 }
@@ -47,25 +47,25 @@ func (s *PrintHandle) HandleCommand(ctx context.Context) error {
 func Example_loStructure() {
 	out := os.Stdout // emulate an interesting dependency
 
-	// Associate Handler with command name "print"
-	printHandle := NewPrintHandle(out)
-	print := clic.New(printHandle, "print")
+	// Associate Handler with command name
+	handlePrint := NewHandlePrint(out)
+	print := clic.New(handlePrint, "print")
 
 	// Associate "print" flag and operand variables with relevant names
-	print.Flag(&printHandle.info, "i|info", "Set additional info.")
-	print.Operand(&printHandle.value, true, "first_operand", "Value to be printed.")
+	print.Flag(&handlePrint.info, "i|info", "Set additional info.")
+	print.Operand(&handlePrint.value, true, "first_operand", "Value to be printed.")
 
 	// Associate Handler with application name, adding "print" as a subcommand
-	rootHandle := clic.New(NewRootHandle(out), "myapp", print)
+	root := clic.New(NewHandleRoot(out), "myapp", print)
 
 	// Parse the cli command as `myapp print --info=flagval arrrg`
-	resolved, err := rootHandle.Parse(args[1:])
+	cmd, err := root.Parse(args[1:])
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// Run the handler that Parse resolved to
-	if err := resolved.Handle(context.Background()); err != nil {
+	if err := cmd.Handle(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 

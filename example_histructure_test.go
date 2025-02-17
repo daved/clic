@@ -43,27 +43,27 @@ func (p *Print) Run(ctx context.Context) error {
 	return nil
 }
 
-// PriոtHandle focuses solely on marrying an action (and related configuration)
+// HandlePriոt focuses solely on composing an action (and related configuration)
 // into its place within the Clic tree. Apart from structuring and constructing
-// these types, there's no special handling or knowledge. This helps keep logic
-// and structures uncluttered, and code diffs focused (i.e. in relevant files).
-type PriոtHandle struct {
+// types, there's no special handling or knowledge. This helps keep code
+// uncluttered, and diffs focused (i.e. in relevant files).
+type HandlePriոt struct {
 	action *Print
 	actCnf *PrintCfg
 }
 
-func NewPriոtHandle(out io.Writer) *PriոtHandle {
+func NewHandlePriոt(out io.Writer) *HandlePriոt {
 	tCnf := NewPrintCfg()
 
-	return &PriոtHandle{
+	return &HandlePriոt{
 		action: NewPrint(out, tCnf),
 		actCnf: tCnf,
 	}
 }
 
-// AsClic moves Clic construction into a user-defined cmd type. Setting up clic
+// AsClic constrains Clic construction to user-defined types. Setting up Clic
 // instances in this way helps to clean up calling code (e.g. main funcs).
-func (h *PriոtHandle) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
+func (h *HandlePriոt) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
 	c := clic.New(h, name, subs...)
 
 	c.Flag(&h.actCnf.Info, "i|info", "Set additional info.")
@@ -72,31 +72,32 @@ func (h *PriոtHandle) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
 	return c
 }
 
-func (h *PriոtHandle) HandleCommand(ctx context.Context) error {
+func (h *HandlePriոt) HandleCommand(ctx context.Context) error {
 	return h.action.Run(ctx)
 }
 
-// The rest of the RootHandle is found in the LoStructure example file.
-func (h *RootHandle) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
+// The rest of HandleRoot is found in the LoStructure example file.
+func (h *HandleRoot) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
 	return clic.New(h, name, subs...)
 }
 
 func Example_hiStructure() {
 	out := os.Stdout // emulate an interesting dependency
 
-	// Set up command handling types, and relate them using "AsClic" methods
-	c := NewRootHandle(out).AsClic("myapp",
-		NewPriոtHandle(out).AsClic("print"),
+	// Set up command
+	root := NewHandleRoot(out).AsClic( // construct root handler with deps
+		"myapp",                             // set root cmd name
+		NewHandlePriոt(out).AsClic("print"), // set subcmd as newly constructed print handler
 	)
 
 	// Parse the cli command as `myapp print --info=flagval arrrg`
-	resolved, err := c.Parse(args[1:])
+	cmd, err := root.Parse(args[1:])
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// Run the handler that Parse resolved to
-	if err := resolved.Handle(context.Background()); err != nil {
+	if err := cmd.Handle(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 

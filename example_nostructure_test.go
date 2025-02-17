@@ -18,13 +18,14 @@ func Example_noStructure() {
 		out   = os.Stdout // emulate an interesting dependency
 	)
 
-	// Associate HandlerFunc with command name "print"
+	// Associate HandlerFunc with command name
 	print := clic.NewFromFunc(
 		func(ctx context.Context) error {
 			fmt.Fprintf(out, "info flag = %s\nvalue operand = %v\n", info, value)
 			return nil
 		},
-		"print")
+		"print",
+	)
 
 	// Associate "print" flag and operand variables with relevant names
 	print.Flag(&info, "i|info", "Set additional info.")
@@ -33,19 +34,20 @@ func Example_noStructure() {
 	// Associate HandlerFunc with application name, adding "print" as a subcommand
 	root := clic.NewFromFunc(
 		func(ctx context.Context) error {
-			fmt.Fprintln(out, "ouch, hit root")
+			fmt.Fprintln(out, "from root")
 			return nil
 		},
-		"myapp", print)
+		"myapp", print,
+	)
 
 	// Parse the cli command as `myapp print --info=flagval arrrg`
-	resolved, err := root.Parse(args[1:])
+	cmd, err := root.Parse(args[1:])
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// Run the handler that Parse resolved to
-	if err := resolved.Handle(context.Background()); err != nil {
+	if err := cmd.Handle(context.Background()); err != nil {
 		log.Fatalln(err)
 	}
 

@@ -14,17 +14,13 @@ func printFunc(info, value *string) func(context.Context) error {
 	}
 }
 
-func print(ctx context.Context) error {
-	var (
-		info  = "default"
-		value = "unset"
-	)
-
-	return printFunc(&info, &value)(ctx)
-}
-
 func hello(context.Context) error {
 	fmt.Println("Hello, World")
+	return nil
+}
+
+func goodbye(context.Context) error {
+	fmt.Println("goodbye")
 	return nil
 }
 
