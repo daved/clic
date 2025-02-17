@@ -7,22 +7,32 @@ import (
 	"text/template"
 
 	"github.com/daved/clic/tmpl"
+	"github.com/daved/flagset"
 )
 
 // NewUsageTmpl returns the default TmplConfig value. This can be used
 // as an example of how to setup custom usage output templating.
 func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 	type tmplData struct {
-		Cmd    *Clic
-		CmdSet []*Clic
+		Cmd *Clic
 	}
 
 	data := &tmplData{
-		Cmd:    c,
-		CmdSet: cmdSet(c),
+		Cmd: c,
 	}
 
-	ensureSubCmdCatsSort(c)
+	cmdSetFn := func(c *Clic) []*Clic {
+		all := []*Clic{c}
+
+		for c.parent != nil {
+			c = c.parent
+			all = append(all, c)
+		}
+
+		slices.Reverse(all)
+
+		return all
+	}
 
 	cmdSetHintFn := func(cmds []*Clic) string {
 		var out, sep string
@@ -81,7 +91,37 @@ func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 		return " " + pre + out + suf
 	}
 
+	unhiddenFlagsFn := func(flags []*flagset.Flag) []*flagset.Flag {
+		var out []*flagset.Flag
+		for _, flag := range flags {
+			if !flag.HideUsage {
+				out = append(out, flag)
+			}
+		}
+		return out
+	}
+
+	subCmdCatsSortFn := func(c *Clic) []string {
+		sort := slices.Clone(c.SubCmdCatsSort)
+		for _, sub := range c.SubCmds() {
+			if c.SubCmdCatsSort == nil && c.Category == "" {
+				continue
+			}
+
+			if !slices.ContainsFunc(sort, func(s string) bool {
+				prefix, _, _ := strings.Cut(s, "|")
+				return prefix == sub.Category
+			}) {
+				sort = append(sort, sub.Category)
+			}
+		}
+		return sort
+	}
+
 	categoryLine := func(s string) string {
+		if s == "" {
+			return ""
+		}
 		name, desc, _ := strings.Cut(s, "|")
 		return fmt.Sprintf("%-12s %s", name, desc)
 	}
@@ -98,9 +138,12 @@ func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 	}
 
 	fMap := template.FuncMap{
+		"CmdSet":              cmdSetFn,
 		"CmdSetHint":          cmdSetHintFn,
 		"SubsAndOperandsHint": subsAndOperandsHintFn,
+		"UnhiddenFlags":       unhiddenFlagsFn,
 		"StringsJoin":         strings.Join,
+		"SubCmdCatsSort":      subCmdCatsSortFn,
 		"CategoryLine":        categoryLine,
 		"SubCmdsByCategory":   subCmdsByCategoryFn,
 		"SubCmdLine":          subCmdLine,
@@ -108,67 +151,37 @@ func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
 
 	text := strings.TrimSpace(`
 {{- $cmd := .Cmd -}}
+{{- $cmdSet := CmdSet $cmd -}}
+{{- $unhiddenFlags := UnhiddenFlags $cmd.FlagSet.Flags -}}
+{{- $subCmdCatsSort := SubCmdCatsSort $cmd -}}
+{{if 1 -}}
 Usage:
 
-{{if .}}  {{end}}{{CmdSetHint .CmdSet}}{{SubsAndOperandsHint $cmd}}
-    {{- if $cmd.Description}}
-
-      {{$cmd.Description}}
-    {{- end}}
-{{if $cmd.FlagSet.Flags}}
-{{$cmd.FlagSet.Usage}}{{- end}}
-{{- if $cmd.Aliases}}
+  {{CmdSetHint $cmdSet}}{{SubsAndOperandsHint $cmd}}
+{{end -}}
+{{if $cmd.Description}}
+    {{$cmd.Description}}
+{{end -}}
+{{if $unhiddenFlags}}
+{{$cmd.FlagSet.Usage -}}
+{{end -}}
+{{if $cmd.Aliases}}
 Aliases for {{$cmd.FlagSet.Name}}:
 
       {{StringsJoin $cmd.Aliases ", "}}
-{{- end}}
-{{- if $cmd.SubCmdCatsSort}}
+{{end -}}
+{{if $subCmdCatsSort}}
 Subcommands for {{$cmd.FlagSet.Name}}:
-
-{{range $cmd.SubCmdCatsSort}}{{$catLine := CategoryLine .}}
-{{- if $catLine}}  {{CategoryLine .}}{{- end}}
-  {{- range $_, $sub := SubCmdsByCategory $cmd.SubCmds .}}
-    {{SubCmdLine $sub}}
-  {{- end}}
-
-{{end}}
-{{- end}}
+{{range $subCmdCatsSort -}}{{- $catLine := CategoryLine . -}}
+{{if $catLine}}
+  {{$catLine}}{{end}}
+{{range $_, $sub := SubCmdsByCategory $cmd.SubCmds . -}}
+{{if 1}}{{end}}    {{SubCmdLine $sub}}
+{{end -}}
+{{if 1}}{{end -}}
+{{end -}}
+{{end -}}
 `)
 
 	return tmpl.New(text, fMap, data)
-}
-
-func cmdSet(c *Clic) []*Clic {
-	all := []*Clic{c}
-
-	for c.parent != nil {
-		c = c.parent
-		all = append(all, c)
-	}
-
-	slices.Reverse(all)
-
-	return all
-}
-
-// todo: swap this for a tmpl func,
-// return relevant values when called instead of updating clic
-func ensureSubCmdCatsSort(c *Clic) {
-	sort := slices.Clone(c.SubCmdCatsSort)
-	for _, sub := range c.SubCmds() {
-		if c.SubCmdCatsSort == nil && c.Category == "" {
-			continue
-		}
-
-		if !slices.ContainsFunc(sort, func(s string) bool {
-			prefix, _, _ := strings.Cut(s, "|")
-			return prefix == sub.Category
-		}) {
-			sort = append(sort, sub.Category)
-		}
-	}
-
-	if len(sort) > 0 {
-		c.SubCmdCatsSort = sort
-	}
 }
