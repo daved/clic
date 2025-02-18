@@ -14,11 +14,10 @@ type Clic
     func New(h Handler, name string, subs ...*Clic) *Clic
     func NewFromFunc(f HandlerFunc, name string, subs ...*Clic) *Clic
     func (c *Clic) Flag(val any, names, usage string) *flagset.Flag
-    func (c *Clic) FlagRecursive(val any, names, usage string) *flagset.Flag
-    func (c *Clic) HandleResolvedCmd(ctx context.Context) error
+    func (c *Clic) Handle(ctx context.Context) error
     func (c *Clic) Operand(val any, req bool, name, desc string) *operandset.Operand
     func (c *Clic) Parse(args []string) error
-    func (c *Clic) SetUsageTemplating(tmplCfg *TmplConfig)
+    func (c *Clic) Recursively(fn func(*Clic))
     func (c *Clic) Usage() string
 // see package docs for more
 ```
@@ -35,17 +34,17 @@ func main() {
     )
 
     // Associate HandlerFunc with command name
-    c := clic.NewFromFunc(printFunc(&info, &value), "myapp")
+    root := clic.NewFromFunc(printFunc(&info, &value), "myapp")
 
     // Associate flag and operand variables with relevant names
-    c.Flag(&info, "i|info", "Set additional info.")
-    c.Operand(&value, true, "first_operand", "Value to be printed.")
+    root.Flag(&info, "i|info", "Set additional info.")
+    root.Operand(&value, true, "first_operand", "Value to be printed.")
 
     // Parse the cli command as `myapp --info=flagval arrrg`
-    _ = c.Parse([]string{"--info=flagval", "arrrg"})
+    cmd, _ := c.Parse([]string{"--info=flagval", "arrrg"})
 
     // Run the handler that Parse resolved to
-    _ = c.HandleResolvedCmd(context.Background())
+    _ = cmd.Handle(context.Background())
 }
 ```
 
@@ -67,7 +66,7 @@ command --flag=flag-value subcommand -f flag-value operand_a operand_b
 
 ### Default Templating
 
-`c.Usage()` value from the usage example above:
+`cmd.Usage()` value from the usage example above:
 
 ```txt
 Usage:
@@ -82,9 +81,10 @@ Flags for myapp:
 
 ### Custom Templating
 
-Custom templates and template behaviors (i.e. template function maps) can be set. Custom data can be
-attached to instances of Clic, FlagSet, Flag, OperandSet, and Operand using their Meta fields for
-access from custom templates.
+Custom templates and template behaviors (i.e. template function maps) can be used with the clic/tmpl
+package for convenience. Custom data can be attached to instances of Clic, FlagSet, Flag,
+OperandSet, and Operand using their Meta fields for access from custom templates. The contents of
+NewUsageTmpl can be used as a reference.
 
 ### Maturable Architecture
 
@@ -95,3 +95,4 @@ application growth.
 
 - [flagset](https://github.com/daved/flagset)
 - [operandset](https://github.com/daved/operandset)
+- [vtype](https://github.com/daved/vtype)
