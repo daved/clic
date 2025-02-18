@@ -133,7 +133,7 @@ func Example_verbosity() {
 	//         Set verbosity. Can be set multiple times.
 }
 
-func Example_recursiveHandlerWrapping() {
+func Example_recursivelyWrappingHandlers() {
 	// error handling omitted to keep example focused
 
 	// Associate HandlerFuncs with command names
