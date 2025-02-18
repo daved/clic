@@ -48,7 +48,7 @@ func (f HandlerFunc) HandleCommand(ctx context.Context) error {
 type Clic struct {
 	Links
 
-	handler    Handler
+	Handler    Handler
 	Aliases    []string
 	FlagSet    *flagset.FlagSet
 	OperandSet *operandset.OperandSet
@@ -69,7 +69,7 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 	name = names[0]
 
 	c := &Clic{
-		handler:    h,
+		Handler:    h,
 		Aliases:    names[1:],
 		FlagSet:    flagset.New(name),
 		OperandSet: operandset.New(name),
@@ -133,7 +133,7 @@ func (c *Clic) Recursively(fn func(*Clic)) {
 }
 
 func (c *Clic) Handle(ctx context.Context) error {
-	return c.handler.HandleCommand(ctx)
+	return c.Handler.HandleCommand(ctx)
 }
 
 // Usage returns the executed usage template. The Meta fields of the relevant
