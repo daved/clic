@@ -2,6 +2,7 @@ package clic_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/daved/clic"
@@ -50,10 +51,8 @@ func Example_aliases() {
 	// Associate HandlerFunc with command name and alias
 	root := clic.NewFromFunc(hello, "hello|aliased")
 
-	// Parse the cli command as `myapp aliased`
+	// Parse the cli command as `myapp aliased`, and run the handler
 	cmd, _ := root.Parse([]string{"aliased"})
-
-	// Run the handler that Parse resolved to
 	_ = cmd.Handle(context.Background())
 
 	// Output:
@@ -109,16 +108,12 @@ func Example_verbosity() {
 
 	var verbosity []bool
 
-	// Associate HandlerFunc with command name
+	// Associate HandlerFunc with command name, and set verbosity flag
 	root := clic.NewFromFunc(hello, "myapp")
-
-	// Associate flag variable with relevant name
 	root.Flag(&verbosity, "v", "Set verbosity. Can be set multiple times.")
 
-	// Parse the cli command as `myapp -vvv`
+	// Parse the cli command as `myapp -vvv`, and run the handler
 	cmd, _ := root.Parse([]string{"-vvv"})
-
-	// Run the handler that Parse resolved to
 	_ = cmd.Handle(context.Background())
 
 	fmt.Printf("verbosity: length=%d value=%v\n", len(verbosity), verbosity)
@@ -138,7 +133,7 @@ func Example_verbosity() {
 	//         Set verbosity. Can be set multiple times.
 }
 
-func Example_handlerWrapping() {
+func Example_recursiveHandlerWrapping() {
 	// error handling omitted to keep example focused
 
 	// Associate HandlerFuncs with command names
@@ -163,11 +158,11 @@ func Example_handlerWrapping() {
 		})
 	})
 
-	// Parse the cli command as `myapp hello` and run the handler
+	// Parse the cli command as `myapp hello`, and run the handler
 	cmd, _ := root.Parse([]string{"hello"})
 	_ = cmd.Handle(context.Background())
 
-	// Parse the cli command as `myapp goodbye` and run the handler
+	// Parse the cli command as `myapp goodbye`, and run the handler
 	cmd, _ = root.Parse([]string{"goodbye"})
 	_ = cmd.Handle(context.Background())
 	// Output:
@@ -179,40 +174,67 @@ func Example_handlerWrapping() {
 	// after
 }
 
-func Example_recursiveFlagsForSubCmdsOnly() {
-	// error handling omitted to keep example focused
+func Example_helpAndVersionFlags() {
+	// some error handling omitted to keep example focused
 
-	// Associate HandlerFuncs with command names
-	goodbye := clic.NewFromFunc(goodbye, "goodbye")
-	hello := clic.NewFromFunc(hello, "hello", goodbye)
-	root := clic.NewFromFunc(printRoot, "myapp", hello)
+	errHelpRequested := errors.New("help requested")
+	errVersionRequested := errors.New("version requested")
 
-	root.Recursively(func(c *clic.Clic) {
-		// ensure this only applies to subcmds, and not their subcmds or root itself
-		if c.ParentCmd() == nil || c.ParentCmd().FlagSet.Name() != root.FlagSet.Name() {
+	// Associate HandlerFunc with command name, and set flags
+	root := clic.NewFromFunc(printRoot, "myapp")
+	root.Flag(errHelpRequested, "help", "Print usage and quit")
+	root.Flag(errVersionRequested, "version", "Print version and quit")
+
+	// Parse the cli command as `myapp --notify`
+	cmd, err := root.Parse([]string{"--version"})
+	if err != nil {
+		switch {
+		case errors.Is(err, errHelpRequested):
+			fmt.Println(cmd.Usage())
 			return
+
+		case errors.Is(err, errVersionRequested):
+			fmt.Println("version: v1.2.3")
+			return
+
+		default:
+			fmt.Println(cmd.Usage())
+			fmt.Println(err)
+			return // likely as non-zero using os.Exit(n)
 		}
+	}
 
-		notifyFn := func(string) error {
-			fmt.Print("Parsed! ")
-			return nil
-		}
-		c.Flag(notifyFn, "notify", "Prints 'parsed' notification")
-	})
-
-	// Parse the cli command as `myapp --notify` and print err type
-	_, err := root.Parse([]string{"--notify"})
-	fmt.Printf("%T\n", err)
-
-	// Parse the cli command as `myapp hello --notify` and run handler
-	cmd, _ := root.Parse([]string{"hello", "--notify"})
+	// Run the handler that Parse resolved to
 	_ = cmd.Handle(context.Background())
 
-	// Parse the cli command as `myapp hello goodbye --notify` and print err type
-	_, err = root.Parse([]string{"hello", "goodbye", "--notify"})
-	fmt.Printf("%T\n", err)
 	// Output:
-	// *cerrs.Error
-	// Parsed! Hello, World
-	// *cerrs.Error
+	// version: v1.2.3
+}
+
+func Example_userFriendlyErrorMessages() {
+	var info string
+
+	// Associate HandlerFunc with command name, and set info flag
+	root := clic.NewFromFunc(printRoot, "myapp")
+	root.Flag(&info, "info", "Set info")
+
+	// Parse the cli command as `myapp --force-err`
+	cmd, err := root.Parse([]string{"--force-err"})
+	if err != nil {
+		fmt.Println(cmd.Usage())
+		fmt.Println(clic.UserFriendlyError(err))
+		return // likely as non-zero using os.Exit(n)
+	}
+
+	// Output:
+	// Usage:
+	//
+	//   myapp [FLAGS]
+	//
+	// Flags for myapp:
+	//
+	//     --info  =STRING
+	//         Set info
+	//
+	// Unrecognized flag "force-err"
 }
