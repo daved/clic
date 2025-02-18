@@ -163,13 +163,56 @@ func Example_handlerWrapping() {
 		})
 	})
 
-	// Parse the cli command as `myapp hello`
+	// Parse the cli command as `myapp hello` and run the handler
 	cmd, _ := root.Parse([]string{"hello"})
+	_ = cmd.Handle(context.Background())
 
-	// Run the handler that Parse resolved to
+	// Parse the cli command as `myapp goodbye` and run the handler
+	cmd, _ = root.Parse([]string{"goodbye"})
 	_ = cmd.Handle(context.Background())
 	// Output:
 	// before
 	// Hello, World
 	// after
+	// before
+	// Goodbye
+	// after
+}
+
+func Example_recursiveFlagsForSubCmdsOnly() {
+	// error handling omitted to keep example focused
+
+	// Associate HandlerFuncs with command names
+	goodbye := clic.NewFromFunc(goodbye, "goodbye")
+	hello := clic.NewFromFunc(hello, "hello", goodbye)
+	root := clic.NewFromFunc(printRoot, "myapp", hello)
+
+	root.Recursively(func(c *clic.Clic) {
+		// ensure this only applies to subcmds, and not their subcmds or root itself
+		if c.ParentCmd() == nil || c.ParentCmd().FlagSet.Name() != root.FlagSet.Name() {
+			return
+		}
+
+		notifyFn := func(string) error {
+			fmt.Print("Parsed! ")
+			return nil
+		}
+		c.Flag(notifyFn, "notify", "Prints 'parsed' notification")
+	})
+
+	// Parse the cli command as `myapp --notify` and print err type
+	_, err := root.Parse([]string{"--notify"})
+	fmt.Printf("%T\n", err)
+
+	// Parse the cli command as `myapp hello --notify` and run handler
+	cmd, _ := root.Parse([]string{"hello", "--notify"})
+	_ = cmd.Handle(context.Background())
+
+	// Parse the cli command as `myapp hello goodbye --notify` and print err type
+	_, err = root.Parse([]string{"hello", "goodbye", "--notify"})
+	fmt.Printf("%T\n", err)
+	// Output:
+	// *cerrs.Error
+	// Parsed! Hello, World
+	// *cerrs.Error
 }
