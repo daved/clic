@@ -81,7 +81,7 @@ func (h *HandleRoot) AsClic(name string, subs ...*clic.Clic) *clic.Clic {
 	return clic.New(h, name, subs...)
 }
 
-func Example_hiStructure() {
+func Example_appArchitectureHiStructure() {
 	out := os.Stdout // emulate an interesting dependency
 
 	// Set up command

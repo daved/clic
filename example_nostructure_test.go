@@ -11,7 +11,7 @@ import (
 
 var args = []string{"myapp", "print", "--info=flagval", "arrrg"}
 
-func Example_noStructure() {
+func Example_appArchitectureNoStructure() {
 	var (
 		info  = "default"
 		value = "unset"

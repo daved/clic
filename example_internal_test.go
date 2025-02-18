@@ -2,7 +2,6 @@ package clic_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 )
@@ -32,8 +31,4 @@ func details(context.Context) error {
 func printRoot(context.Context) error {
 	fmt.Println("Root")
 	return nil
-}
-
-func unused(context.Context) error {
-	return errors.New("unused")
 }

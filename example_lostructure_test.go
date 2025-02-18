@@ -44,7 +44,7 @@ func (s *HandlePrint) HandleCommand(ctx context.Context) error {
 	return nil
 }
 
-func Example_loStructure() {
+func Example_appArchitectureLoStructure() {
 	out := os.Stdout // emulate an interesting dependency
 
 	// Associate Handler with command name

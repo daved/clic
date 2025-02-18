@@ -54,7 +54,6 @@ func Example_aliases() {
 	// Parse the cli command as `myapp aliased`, and run the handler
 	cmd, _ := root.Parse([]string{"aliased"})
 	_ = cmd.Handle(context.Background())
-
 	// Output:
 	// Hello, World
 }
@@ -74,7 +73,7 @@ func Example_categories() {
 	details.Description = "List details (os.Args)"
 
 	// Associate HandlerFunc with command name
-	root := clic.NewFromFunc(unused, "myapp", hello, goodbye, details)
+	root := clic.NewFromFunc(printRoot, "myapp", hello, goodbye, details)
 	root.SubRequired = true
 	// Set up subcommand category order
 	// Category names seperated from optional descriptions by "|"
@@ -141,7 +140,7 @@ func Example_recursivelyWrappingHandlers() {
 	goodbye := clic.NewFromFunc(goodbye, "goodbye")
 	details := clic.NewFromFunc(details, "details")
 
-	root := clic.NewFromFunc(unused, "myapp", hello, goodbye, details)
+	root := clic.NewFromFunc(printRoot, "myapp", hello, goodbye, details)
 	root.SubRequired = true
 
 	root.Recursively(func(c *clic.Clic) {
@@ -185,7 +184,7 @@ func Example_helpAndVersionFlags() {
 	root.Flag(errHelpRequested, "help", "Print usage and quit")
 	root.Flag(errVersionRequested, "version", "Print version and quit")
 
-	// Parse the cli command as `myapp --notify`
+	// Parse the cli command as `myapp --version`
 	cmd, err := root.Parse([]string{"--version"})
 	if err != nil {
 		switch {
@@ -203,10 +202,6 @@ func Example_helpAndVersionFlags() {
 			return // likely as non-zero using os.Exit(n)
 		}
 	}
-
-	// Run the handler that Parse resolved to
-	_ = cmd.Handle(context.Background())
-
 	// Output:
 	// version: v1.2.3
 }
@@ -225,7 +220,6 @@ func Example_userFriendlyErrorMessages() {
 		fmt.Println(clic.UserFriendlyError(err))
 		return // likely as non-zero using os.Exit(n)
 	}
-
 	// Output:
 	// Usage:
 	//
