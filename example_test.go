@@ -16,14 +16,14 @@ func Example() {
 	)
 
 	// Associate HandlerFunc with command name
-	c := clic.NewFromFunc(printFunc(&info, &value), "myapp")
+	root := clic.NewFromFunc(printFunc(&info, &value), "myapp")
 
 	// Associate flag and operand variables with relevant names
-	c.Flag(&info, "i|info", "Set additional info.")
-	c.Operand(&value, true, "first_operand", "Value to be printed.")
+	root.Flag(&info, "i|info", "Set additional info.")
+	root.Operand(&value, true, "first_operand", "Value to be printed.")
 
 	// Parse the cli command as `myapp --info=flagval arrrg`
-	cmd, _ := c.Parse([]string{"--info=flagval", "arrrg"})
+	cmd, _ := root.Parse([]string{"--info=flagval", "arrrg"})
 
 	// Run the handler that Parse resolved to
 	_ = cmd.Handle(context.Background())
@@ -48,10 +48,10 @@ func Example_aliases() {
 	// error handling omitted to keep example focused
 
 	// Associate HandlerFunc with command name and alias
-	c := clic.NewFromFunc(hello, "hello|aliased")
+	root := clic.NewFromFunc(hello, "hello|aliased")
 
 	// Parse the cli command as `myapp aliased`
-	cmd, _ := c.Parse([]string{"aliased"})
+	cmd, _ := root.Parse([]string{"aliased"})
 
 	// Run the handler that Parse resolved to
 	_ = cmd.Handle(context.Background())
@@ -70,13 +70,14 @@ func Example_categories() {
 	goodbye.Category = "Salutations"
 	goodbye.Description = "Show goodbye message"
 
-	print := clic.NewFromFunc(details, "details")
-	print.Category = "Informational"
-	print.Description = "List details (os.Args)"
+	details := clic.NewFromFunc(details, "details")
+	details.Category = "Informational"
+	details.Description = "List details (os.Args)"
 
-	// Set up subcommand category order in the parent
-	root := clic.NewFromFunc(unused, "myapp", hello, goodbye, print)
+	// Associate HandlerFunc with command name
+	root := clic.NewFromFunc(unused, "myapp", hello, goodbye, details)
 	root.SubRequired = true
+	// Set up subcommand category order
 	// Category names seperated from optional descriptions by "|"
 	root.SubCmdCatsSort = []string{"Salutations|Salutations-related", "Informational|All things info"}
 
@@ -109,13 +110,13 @@ func Example_verbosity() {
 	var verbosity []bool
 
 	// Associate HandlerFunc with command name
-	c := clic.NewFromFunc(hello, "myapp")
+	root := clic.NewFromFunc(hello, "myapp")
 
 	// Associate flag variable with relevant name
-	c.Flag(&verbosity, "v", "Set verbosity. Can be set multiple times.")
+	root.Flag(&verbosity, "v", "Set verbosity. Can be set multiple times.")
 
 	// Parse the cli command as `myapp -vvv`
-	cmd, _ := c.Parse([]string{"-vvv"})
+	cmd, _ := root.Parse([]string{"-vvv"})
 
 	// Run the handler that Parse resolved to
 	_ = cmd.Handle(context.Background())
@@ -135,4 +136,40 @@ func Example_verbosity() {
 	//
 	//     -v  =BOOL
 	//         Set verbosity. Can be set multiple times.
+}
+
+func Example_handlerWrapping() {
+	// error handling omitted to keep example focused
+
+	// Associate HandlerFuncs with command names
+	hello := clic.NewFromFunc(hello, "hello")
+	goodbye := clic.NewFromFunc(goodbye, "goodbye")
+	details := clic.NewFromFunc(details, "details")
+
+	root := clic.NewFromFunc(unused, "myapp", hello, goodbye, details)
+	root.SubRequired = true
+
+	root.Recursively(func(c *clic.Clic) {
+		next := c.Handler.HandleCommand
+		c.Handler = clic.HandlerFunc(func(ctx context.Context) error {
+			fmt.Println("before")
+
+			if err := next(ctx); err != nil {
+				return err
+			}
+
+			fmt.Println("after")
+			return nil
+		})
+	})
+
+	// Parse the cli command as `myapp hello`
+	cmd, _ := root.Parse([]string{"hello"})
+
+	// Run the handler that Parse resolved to
+	_ = cmd.Handle(context.Background())
+	// Output:
+	// before
+	// Hello, World
+	// after
 }
