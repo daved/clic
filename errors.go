@@ -25,6 +25,7 @@ var (
 	CauseTypeUnsupported  = vtype.ErrTypeUnsupported
 )
 
+// UserFriendlyError returns a new error containing a plain language message.
 func UserFriendlyError(err error) error {
 	if errors.Is(err, CauseSubCmdRequired) {
 		return errors.New("A subcommand is required")

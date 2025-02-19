@@ -1,11 +1,10 @@
 # clic [![GoDoc](https://pkg.go.dev/badge/github.com/daved/clic.svg)](https://pkg.go.dev/github.com/daved/clic)
 
-```go
+```sh
 go get github.com/daved/clic
 ```
 
-Package clic provides a structured multiplexer for CLI commands. In other words, clic will parse CLI
-command arguments and route callers to the appropriate handler.
+Package clic provides streamlined POSIX-friendly CLI command parsing.
 
 ## Usage
 
@@ -52,21 +51,19 @@ func main() {
 
 ### CLI Argument Types
 
-There are three kinds of command line arguments that clic helps to manage: Commands/Subcommands,
-Flags (plus related flag values), and Operands. Commands/subcommands each optionally have their own
-flags and operands. If an argument of a command does not match a subcommand, and is not a flag arg
-(i.e. it does not start with a hyphen and is not a flag value), then it will be parsed as an operand
-if any operands have been defined.
+Three types of arguments are handled: commands (and subcommands), flags (and their values), and
+operands. Commands and subcommands can each define their own flags and operands. Arguments that are
+not subcommands or flag-related (no hyphen prefix, not a flag value), will be treated as operands.
 
-Argument kinds and their placements:
+Example argument layout:
 
-```go
+```sh
 command --flag=flag-value subcommand -f flag-value operand_a operand_b
 ```
 
 ### Default Templating
 
-`cmd.Usage()` value from the usage example above:
+`cmd.Usage()` value from the example above:
 
 ```txt
 Usage:
@@ -81,10 +78,26 @@ Flags for myapp:
 
 ### Custom Templating
 
-Custom templates and template behaviors (i.e. template function maps) can be used with the clic/tmpl
-package for convenience. Custom data can be attached to instances of Clic, FlagSet, Flag,
-OperandSet, and Operand using their Meta fields for access from custom templates. The contents of
-NewUsageTmpl can be used as a reference.
+The tmpl subpackage eases custom templating. Custom data can be attached to instances of Clic,
+FlagSet, Flag, OperandSet, and Operand via their Meta fields for use in templates. The default
+template construction function (NewUsageTmpl) can be used as a reference for custom templates.
+
+### Designed To Be...
+
+POSIX-friendly:
+
+- Long and short flags should be supported in a reasonably normal manner
+- Use the term "Operand" rather than the ambiguous "Arg"
+- Flags should not be processed after operands
+- Usage output should be familiar and effective
+
+Simple and powerful:
+
+- The API surface should be small and flexible
+- Flags and operands should not be auto-set (e.g. help flag set explicitly)
+- Advanced usage should look similar to basic usage
+- Users should be trusted to understand/use the type system (e.g. interfaces)
+- Users should be trusted to understand/use advanced control flow mechanisms
 
 ### Maturable Architecture
 
