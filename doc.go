@@ -5,7 +5,7 @@
 // Three types of arguments are handled: commands (and subcommands), flags (and
 // their values), and operands. Commands and subcommands can each define their
 // own flags and operands. Arguments that are not subcommands or flag-related
-// (no hyphen prefix, not a flag value), will be treated as operands.
+// (no hyphen prefix, not a flag value) will be treated as operands.
 //
 // Example argument layout:
 //
