@@ -17,6 +17,8 @@ type Tmpl struct {
 	Data any
 }
 
+// Execute parses the template text and funcmap, then executes it using the set
+// data.
 func (t *Tmpl) Execute() (string, error) {
 	tmpl := template.New("clic").Funcs(t.FMap)
 
@@ -34,6 +36,8 @@ func (t *Tmpl) Execute() (string, error) {
 	return buf.String(), nil
 }
 
+// String calls the Execute method returning either the validly executed
+// template output or error message text.
 func (t *Tmpl) String() string {
 	s, err := t.Execute()
 	if err != nil {
