@@ -28,20 +28,24 @@ func (f HandlerFunc) HandleCommand(ctx context.Context) error {
 type Clic struct {
 	Links
 
-	Handler    Handler
-	Aliases    []string
-	FlagSet    *flagset.FlagSet
-	OperandSet *operandset.OperandSet
-
-	SubRequired bool
-	Description string
-	HideUsage   bool
-
+	// Templating
+	Tmpl           *Tmpl // set to NewUsageTmpl by default
+	Description    string
+	HideUsage      bool
 	Category       string
 	SubCmdCatsSort []string
+	Meta           map[string]any
 
-	Tmpl *Tmpl
-	Meta map[string]any
+	// Additional Configuration
+	SubRequired bool
+
+	// Reconfiguration (modify as needed)
+	Handler Handler
+	Aliases []string
+
+	// Accessing (avoid modification)
+	FlagSet    *flagset.FlagSet
+	OperandSet *operandset.OperandSet
 }
 
 // New returns an instance of Clic.
@@ -61,6 +65,7 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 		sub.parent = c
 	}
 	c.Links = Links{subs: subs}
+
 	c.Tmpl = NewUsageTmpl(c)
 
 	return c

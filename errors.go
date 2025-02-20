@@ -16,18 +16,18 @@ var ErrSubCmdRequired = errors.New("subcommand required")
 // detect error conditions using a switch/case and [errors.Is]. If error
 // inspection is required, use [errors.As].
 var (
-	CauseSubCmdRequired   = ErrSubCmdRequired
-	CauseFlagResolve      = &flagset.ResolveError{}
-	CauseFlagUnrecognized = flagset.ErrFlagUnrecognized
-	CauseOperandResolve   = &operandset.ResolveError{}
-	CauseOperandRequired  = operandset.ErrOperandRequired
-	CauseHydrateError     = &vtype.HydrateError{}
-	CauseTypeUnsupported  = vtype.ErrTypeUnsupported
+	CauseParseSubCmdRequired   = ErrSubCmdRequired
+	CauseParseFlagResolve      = &flagset.ResolveError{}
+	CauseParseFlagUnrecognized = flagset.ErrFlagUnrecognized
+	CauseParseOperandResolve   = &operandset.ResolveError{}
+	CauseParseOperandRequired  = operandset.ErrOperandRequired
+	CauseParseHydrateError     = &vtype.HydrateError{}    // from Flag and Operand Resolve
+	CauseParseTypeUnsupported  = vtype.ErrTypeUnsupported // from Flag and Operand Resolve
 )
 
 // UserFriendlyError returns a new error containing a plain language message.
 func UserFriendlyError(err error) error {
-	if errors.Is(err, CauseSubCmdRequired) {
+	if errors.Is(err, ErrSubCmdRequired) {
 		return errors.New("A subcommand is required")
 	}
 
