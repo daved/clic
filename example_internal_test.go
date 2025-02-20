@@ -6,13 +6,6 @@ import (
 	"os"
 )
 
-func printFunc(info, value *string) func(context.Context) error {
-	return func(ctx context.Context) error {
-		fmt.Printf("info flag = %s\nvalue operand = %v\n", *info, *value)
-		return nil
-	}
-}
-
 func hello(context.Context) error {
 	fmt.Println("Hello, World")
 	return nil

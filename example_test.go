@@ -16,8 +16,13 @@ func Example() {
 		value = "unset"
 	)
 
+	printFn := func(ctx context.Context) error {
+		fmt.Printf("info flag = %s\nvalue operand = %v\n", info, value)
+		return nil
+	}
+
 	// Associate HandlerFunc with command name
-	root := clic.NewFromFunc(printFunc(&info, &value), "myapp")
+	root := clic.NewFromFunc(printFn, "myapp")
 
 	// Associate flag and operand variables with relevant names
 	root.Flag(&info, "i|info", "Set additional info.")

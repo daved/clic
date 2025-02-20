@@ -13,7 +13,7 @@
 //
 // # Custom Templating
 //
-// The [tmpl] subpackage eases custom templating. Custom data can be attached to
+// The [Tmpl] type eases custom templating. Custom data can be attached to
 // instances of Clic, FlagSet, Flag, OperandSet, and Operand via their Meta
 // fields for use in templates. The default template construction function
 // ([NewUsageTmpl]) can be used as a reference for custom templates.

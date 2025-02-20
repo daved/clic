@@ -1,18 +1,50 @@
 package clic
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 	"strings"
 	"text/template"
 
-	"github.com/daved/clic/tmpl"
 	"github.com/daved/flagset"
 )
 
-// NewUsageTmpl returns the default TmplConfig value. This can be used
-// as an example of how to setup custom usage output templating.
-func NewUsageTmpl(c *Clic) *tmpl.Tmpl {
+// Tmpl holds template configuration details.
+type Tmpl struct {
+	Text string
+	FMap template.FuncMap
+	Data any
+}
+
+func (t *Tmpl) Execute() (string, error) {
+	tmpl := template.New("clic").Funcs(t.FMap)
+
+	buf := &bytes.Buffer{}
+
+	tmpl, err := tmpl.Parse(t.Text)
+	if err != nil {
+		return "", err
+	}
+
+	if err := tmpl.Execute(buf, t.Data); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
+func (t *Tmpl) String() string {
+	s, err := t.Execute()
+	if err != nil {
+		s = fmt.Sprintf("%v\n", err)
+	}
+	return s
+}
+
+// NewUsageTmpl returns the default template configuration. This can be used as
+// an example of how to setup custom usage output templating.
+func NewUsageTmpl(c *Clic) *Tmpl {
 	type tmplData struct {
 		Cmd *Clic
 	}
@@ -188,5 +220,5 @@ Subcommands for {{$cmd.FlagSet.Name}}:
 {{end -}}
 `)
 
-	return tmpl.New(text, fMap, data)
+	return &Tmpl{text, fMap, data}
 }

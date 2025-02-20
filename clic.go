@@ -40,6 +40,7 @@ type Clic struct {
 	Category       string
 	SubCmdCatsSort []string
 
+	Tmpl *Tmpl
 	Meta map[string]any
 }
 
@@ -60,6 +61,7 @@ func New(h Handler, name string, subs ...*Clic) *Clic {
 		sub.parent = c
 	}
 	c.Links = Links{subs: subs}
+	c.Tmpl = NewUsageTmpl(c)
 
 	return c
 }
@@ -111,9 +113,10 @@ func (c *Clic) Handle(ctx context.Context) error {
 }
 
 // Usage returns usage text. The default template construction function
-// ([NewUsageTmpl]) can be used as a reference for custom templates.
+// ([NewUsageTmpl]) can be used as a reference for custom templates which should
+// be used to set the "Tmpl" field on Clic (likely using [*Clic.Recursively]).
 func (c *Clic) Usage() string {
-	return NewUsageTmpl(c).String()
+	return c.Tmpl.String()
 }
 
 var errParseNoMatch = errors.New("parse: no command match")
