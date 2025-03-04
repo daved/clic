@@ -6,7 +6,7 @@ import (
 
 	"github.com/daved/flagset"
 	"github.com/daved/operandset"
-	"github.com/daved/vtype"
+	"github.com/daved/vtypes"
 )
 
 // ErrSubCmdRequired signals that a subcommand is required and not set.
@@ -21,8 +21,9 @@ var (
 	CauseParseFlagUnrecognized = flagset.ErrFlagUnrecognized
 	CauseParseOperandResolve   = &operandset.ResolveError{}
 	CauseParseOperandRequired  = operandset.ErrOperandRequired
-	CauseParseHydrateError     = &vtype.HydrateError{}    // from Flag and Operand Resolve
-	CauseParseTypeUnsupported  = vtype.ErrTypeUnsupported // from Flag and Operand Resolve
+	CauseParseHydrateError     = &vtypes.HydrateError{}     // from Flag and Operand Resolve
+	CauseParseTypeUnsupported  = vtypes.ErrTypeUnsupported  // from Flag and Operand Resolve
+	CauseParseValueUnsupported = vtypes.ErrValueUnsupported // from Flag and Operand Resolve
 )
 
 // UserFriendlyError returns a new error containing a plain language message.
@@ -55,8 +56,8 @@ func UserFriendlyError(err error) error {
 }
 
 func friendlyHydrateError(err error, typ string) error {
-	if hydErr := (*vtype.HydrateError)(nil); errors.As(err, &hydErr) {
-		if errors.Is(hydErr, vtype.ErrTypeUnsupported) {
+	if hydErr := (*vtypes.HydrateError)(nil); errors.As(err, &hydErr) {
+		if errors.Is(hydErr, vtypes.ErrTypeUnsupported) {
 			return fmt.Errorf("Unsupported %s value type '%T'", typ, hydErr.Val)
 		}
 		return fmt.Errorf(

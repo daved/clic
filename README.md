@@ -61,6 +61,11 @@ Example argument layout:
 command --flag=flag-value subcommand -f flag-value operand_a operand_b
 ```
 
+### Supported Flag/Operand Value Types
+
+See [vtypes.Hydrate](https://pkg.go.dev/github.com/daved/vtypes#Hydrate) for supported flag/operand
+value types.
+
 ### Default Templating
 
 `cmd.Usage()` value from the example above:
@@ -108,4 +113,4 @@ application growth.
 
 - [flagset](https://github.com/daved/flagset)
 - [operandset](https://github.com/daved/operandset)
-- [vtype](https://github.com/daved/vtype)
+- [vtypes](https://github.com/daved/vtypes)
